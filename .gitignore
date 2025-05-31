@@ -1,0 +1,64 @@
+# Unity - fichiers système
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+
+# Visual Studio / JetBrains
+.vs/
+.idea/
+*.sln
+*.csproj
+*.user
+*.pidb
+*.booproj
+*.svd
+*.suo
+
+# Fichiers Unity générés
+*.unityproj
+*.tmproj
+*.userprefs
+
+# Assemblies
+*.dll
+*.exe
+*.so
+*.dylib
+*.pdb
+
+# Backup / Cache
+*.bak
+*.tmp
+*.old
+*.orig
+
+# AssetBundles
+*.manifest
+
+# Crashes / rapports d'erreurs
+sysinfo.txt
+crash-*.log
+
+# Unity Collaborate / PlasticSCM
+.collabignore
+.plastic/
+*.plastic
+
+# Rider / VS Code
+.idea/
+.vscode/
+*.code-workspace
+
+# Ignorer le fichier de lock si tu utilises un gestionnaire de paquets
+Packages/packages-lock.json
+
+# Autres (git-lfs)
+ .gitattributes
+
+# Ignorer les builds locaux
+Build*/**
+ExportedObj/
