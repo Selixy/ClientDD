@@ -7,8 +7,17 @@ namespace DnD.DnD_5e
     {
         public string Usage { get; set; }
 
-        public Material(string name, string description, int weight, int value, string usage)
-            : base(name, description, weight, value)
+        public Material(string name
+                       ,string description
+                       ,int weight
+                       ,int value
+                       ,string usage
+                       )
+                       :base(name
+                            ,description
+                            ,weight
+                            ,value
+                            )
         {
             Usage = usage;
         }

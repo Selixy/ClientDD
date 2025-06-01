@@ -6,8 +6,17 @@ namespace DnD.DnD_5e
     {
         public string Effect { get; set; }
 
-        public Consumable(string name, string description, int weight, int value, string effect)
-            : base(name, description, weight, value)
+        public Consumable(string name
+                         ,string description
+                         ,int weight
+                         ,int value
+                         ,string effect
+                         )
+                         :base(name
+                              ,description
+                              ,weight
+                              ,value
+                              )
         {
             Effect = effect;
         }

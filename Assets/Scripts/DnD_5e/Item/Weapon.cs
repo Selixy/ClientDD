@@ -7,16 +7,30 @@ namespace DnD.DnD_5e
 {
     public class Weapon : Item_DnD_5e
     {
-        public int DamageDiceCount { get; set; }
-        public int DamageDiceValue { get; set; }
-        public string DamageType { get; set; }
-        public WeaponType Type { get; set; }
-        public bool Finesse { get; set; }
-        public bool TwoHanded { get; set; }
+        public int DamageDiceCount     { get; set; }
+        public int DamageDiceValue     { get; set; }
+        public string DamageType       { get; set; }
+        public WeaponType Type         { get; set; }
+        public bool Finesse            { get; set; }
+        public bool TwoHanded          { get; set; }
 
-        public Weapon(string name, string description, int weight, int value,
-            int diceCount, int diceValue, string damageType, WeaponType type, bool finesse = false, bool twoHanded = false)
-            : base(name, description, weight, value)
+        public Weapon(string     name
+                     ,string     description
+                     ,int        weight
+                     ,int        value
+
+                     ,int        diceCount
+                     ,int        diceValue
+                     ,string     damageType
+                     ,WeaponType type
+                     ,bool       finesse   = false
+                     ,bool       twoHanded = false
+                     ) 
+                     :base(name
+                          ,description
+                          ,weight
+                          ,value
+                          )
         {
             DamageDiceCount = diceCount;
             DamageDiceValue = diceValue;
@@ -28,7 +42,7 @@ namespace DnD.DnD_5e
 
         public override void Use(PlayerDND5e user)
         {
-            Debug.Log($"{user.Name} utilise {Name} pour attaquer avec {DamageDiceCount}d{DamageDiceValue} dégâts ({DamageType})");
+            
         }
     }
 }

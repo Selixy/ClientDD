@@ -6,7 +6,7 @@ namespace DnD.DnD_5e
     public class Attack : Skill_DnD_5e
     {
         public bool IsMagical = false;
-        public List<DamageDice> Damage = new List<DamageDice>();
+        public List<DamageComponent> Damage = new List<DamageComponent>();
 
         public override void Cast()
         {

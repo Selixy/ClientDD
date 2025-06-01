@@ -10,8 +10,19 @@ namespace DnD.DnD_5e
         public ArmorType Type { get; set; }
         public bool RequiresProficiency { get; set; }
 
-        public Armor(string name, string description, int weight, int value, int baseAC, ArmorType type, bool requiresProficiency = true)
-            : base(name, description, weight, value)
+        public Armor(string name
+                    ,string description
+                    ,int weight
+                    ,int value
+                    ,int baseAC
+                    ,ArmorType type
+                    ,bool requiresProficiency = true
+                    )
+                    :base(name
+                         ,description
+                         ,weight
+                         ,value
+                         )
         {
             BaseAC = baseAC;
             Type = type;
