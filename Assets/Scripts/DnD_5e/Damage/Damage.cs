@@ -27,13 +27,25 @@ namespace DnD.DnD_5e
         public int Radiant;      // Lumière divine
         public int Nécrotique;   // Mort/vide
         public int Psychique;    // Mental
+        public int Heal;         // Soins
 
 
         public int Total()
         {
-            return Contondant + Perforant + Tranchant + Force +
-                Feu + Froid + Foudre + Tonnerre +
-                Acide + Poison + Radiant + Nécrotique + Psychique;
+            return Contondant
+                 + Perforant
+                 + Tranchant 
+                 + Force 
+                 + Feu 
+                 + Froid 
+                 + Foudre 
+                 + Tonnerre 
+                 + Acide 
+                 + Poison 
+                 + Radiant 
+                 + Nécrotique 
+                 + Psychique
+                 + Heal;
         }
 
         public override string ToString()
@@ -56,6 +68,7 @@ namespace DnD.DnD_5e
             if (Radiant > 0)     parts.Add($"{Radiant} radiant");
             if (Nécrotique > 0)  parts.Add($"{Nécrotique} nécrotique");
             if (Psychique > 0)   parts.Add($"{Psychique} psychique");
+            if (Heal > 0)        parts.Add($"{Heal} Heal");
 
             string type = Magique ? "[magique]" : "[non-magique]";
             return $"Dégâts {type} : " + string.Join(", ", parts);

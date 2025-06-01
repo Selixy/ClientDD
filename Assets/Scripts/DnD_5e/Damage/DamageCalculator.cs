@@ -28,10 +28,11 @@ namespace DnD.DnD_5e
 
                     case DamageType.Acide:       result.Acide      += rolled; break;
                     case DamageType.Poison:      result.Poison     += rolled; break;
-                    
+
                     case DamageType.Radiant:     result.Radiant    += rolled; break;
                     case DamageType.Nécrotique:  result.Nécrotique += rolled; break;
                     case DamageType.Psychique:   result.Psychique  += rolled; break;
+                    case DamageType.Heal:        result.Heal       += rolled; break;
                 }
             }
 
