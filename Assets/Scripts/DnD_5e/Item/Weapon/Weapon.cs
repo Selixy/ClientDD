@@ -47,9 +47,6 @@ namespace DnD.DnD_5e
 
         }
 
-        public override void Use(PlayerDND5e user)
-        {
-            Debug.Log($"{Name} est utilisé par {user.Name}");
-        }
+
     }
 }

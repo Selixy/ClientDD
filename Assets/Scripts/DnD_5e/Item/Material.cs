@@ -5,13 +5,10 @@ namespace DnD.DnD_5e
 {
     public class Material : Item_DnD_5e
     {
-        public string Usage { get; set; }
-
         public Material(string name
-                       ,string description
-                       ,int weight
-                       ,int value
-                       ,string usage
+                       ,string description = null
+                       ,int weight = 0
+                       ,int value  = 0
                        )
                        :base(name
                             ,description
@@ -19,12 +16,7 @@ namespace DnD.DnD_5e
                             ,value
                             )
         {
-            Usage = usage;
-        }
-
-        public override void Use(PlayerDND5e user)
-        {
-            Debug.Log($"{user.Name} utilise {Name} ({Usage})");
-        }
+            
+        }                    
     }
 }

@@ -30,7 +30,7 @@ namespace DnD.DnD_5e
         public int Heal;         // Soins
 
 
-        public int Total()
+        public int Total(Entity_DnD_5e Player)
         {
             return Contondant
                  + Perforant

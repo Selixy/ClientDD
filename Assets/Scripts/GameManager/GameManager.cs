@@ -8,6 +8,6 @@ namespace DnD
     public partial class GameManager : MonoBehaviour
     {
         // Liste de joueurs
-        public List<PlayerDND5e> players = new List<PlayerDND5e>();
+        public List<Player_DnD_5e> players = new List<Player_DnD_5e>();
     }
 }

@@ -7,10 +7,9 @@ namespace DnD.DnD_5e
         public string Effect { get; set; }
 
         public Consumable(string name
-                         ,string description
-                         ,int weight
-                         ,int value
-                         ,string effect
+                         ,string description = null
+                         ,int weight = 0
+                         ,int value  = 0
                          )
                          :base(name
                               ,description
@@ -18,12 +17,8 @@ namespace DnD.DnD_5e
                               ,value
                               )
         {
-            Effect = effect;
+            
         }
 
-        public override void Use(PlayerDND5e user)
-        {
-            Debug.Log($"{user.Name} consomme {Name} : effet → {Effect}");
-        }
     }
 }
