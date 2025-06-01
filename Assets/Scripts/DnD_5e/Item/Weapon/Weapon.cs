@@ -29,6 +29,7 @@ namespace DnD.DnD_5e
                      ,string description   = null
                      ,int    weight        = 0
                      ,int    value         = 0
+                     ,Harmony HarmonyFlags = 0
 
                      ,WeaponType           properties  = 0
                      ,int                  bonusAttack = 0
@@ -38,6 +39,7 @@ namespace DnD.DnD_5e
                           ,description
                           ,weight
                           ,value
+                          ,HarmonyFlags
                           )
         {
             Properties  = properties;
