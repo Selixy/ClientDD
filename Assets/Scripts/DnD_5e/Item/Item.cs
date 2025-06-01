@@ -2,6 +2,18 @@ using UnityEngine;
 
 namespace DnD.DnD_5e
 {
+    public enum Rarity
+    {
+
+    }
+
+    [System.Flags]
+    public enum Harmony
+    {
+        None = 0
+
+    }
+
     public abstract class Item_DnD_5e
     {
         public string Name         { get; private set; }
@@ -10,9 +22,9 @@ namespace DnD.DnD_5e
         public int    Value        { get; private set; }
 
         public Item_DnD_5e(string name
-                          ,string description
-                          ,int weight
-                          ,int value
+                          ,string description = null
+                          ,int weight = 0
+                          ,int value  = 0
                           )
         {
             Name = name;
