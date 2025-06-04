@@ -8,6 +8,11 @@ namespace DnD.DnD_5e
         public bool IsMagical = false;
         public List<DamageComponent> Damage = new List<DamageComponent>();
 
+        public Attack(ActivContext Context):base(Context)
+        {
+            this.Context = Context;
+        }
+
         public override void Cast()
         {
             // Comportement de compétence générique
