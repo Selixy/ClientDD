@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace DnD.DnD_5e
 {
     public enum Rarity
@@ -23,15 +25,11 @@ namespace DnD.DnD_5e
         Unique             = 0 << 5         // Objet unique dans le monde
     }
 
-    public class Item_DnD_5e
+    public class Item_DnD_5e : Item
     {
-        public string Name             { get; private set; }
-        public string Description      { get; private set; }
-        public int    Weight           { get; private set; }
-        public int    Value            { get; private set; }
-        public Entity_DnD_5e PossessTo { get; private set; }
-        public Entity_DnD_5e AttunedTo { get; private set; }
-        public Harmony HarmonyFlags    { get; private set; }
+        public Harmony    HarmonyFlags { get; protected set; }
+        public Entity_DnD_5e AttunedTo { get; protected set; }
+
 
         public Item_DnD_5e(string name
                           ,string description = null
@@ -39,6 +37,11 @@ namespace DnD.DnD_5e
                           ,int value  = 0
                           ,Harmony HarmonyFlags = 0
                           )
+                          :base(name
+                               ,description
+                               ,weight
+                               ,value
+                               )
         {
             Name = name;
             Description = description;
@@ -46,13 +49,16 @@ namespace DnD.DnD_5e
             Value = value;
         }
 
-        public virtual void Equip(Entity_DnD_5e Entity)
+        public override void Equip(Entity Entity)
         {
-            PossessTo = Entity;
-        }
-        public virtual void Unequip()
-        {
-            
+            if (Entity is Entity_DnD_5e dndEntity)
+            {
+                PossessTo = dndEntity;
+            }
+            else
+            {
+                Debug.LogError("Equip : l'entité passée n'est pas du type Entity_DnD_5e !");
+            }
         }
 
         public virtual bool IsAttuned(Entity_DnD_5e entity)
