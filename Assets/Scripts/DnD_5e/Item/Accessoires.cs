@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DnD.DnD_5e
 {
-    public class Equipment : Item_DnD_5e
+    public class Accessoires : Item_DnD_5e
     {
 
         public Equipment(string name
