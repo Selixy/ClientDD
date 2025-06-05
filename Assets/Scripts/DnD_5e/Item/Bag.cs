@@ -4,7 +4,7 @@ namespace DnD.DnD_5e
 {
     public class Bag : Item_DnD_5e
     {
-        public List<Item_DnD_5e> Content { get; private set; }
+        public Inventaire_DnD_5e Content { get; private set; }
 
         public Bag(string name
                   ,string description = null
@@ -20,7 +20,7 @@ namespace DnD.DnD_5e
                        ,HarmonyFlags
                        )
         {
-            this.Content = content;
+            this.Content = new Inventaire_DnD_5e(content);
         }
     }
 }
