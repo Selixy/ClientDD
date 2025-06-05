@@ -10,17 +10,6 @@ public class Entity
     public int              HpBonus    { get; protected set; }
     public Inventaire<Item> Inventaire { get; protected set; }
 
-    public virtual void TakeDamage(int amount)
-    {
-        CurHp -= amount;
-        if (CurHp < 0) CurHp = 0;
-    }
-
-    public virtual void Heal(int amount)
-    {
-        CurHp += amount;
-        if (CurHp > HpMax + HpBonus) CurHp = HpMax + HpBonus;
-    }
 
     public Entity(string name = "[Unknown Entity]"
                  ,int lvl     = 1
@@ -33,5 +22,32 @@ public class Entity
         Exp   = exp;
         HpMax = hpMax;
         CurHp = hpMax;
+    }
+
+
+    public virtual void Heal(int amount)
+    {
+        CurHp += amount;
+        CurHp = System.Math.Min(CurHp, HpMax);
+    }
+
+    public virtual void TakeDamage(int amount)
+    {
+        if (HpBonus > 0) {
+
+            HpBonus -= amount;
+
+            if (HpBonus < 0) {
+                CurHp -= HpBonus;
+                HpBonus = 0;
+            }
+        } else {
+            CurHp -= amount;
+        }
+
+        if (CurHp < 0) 
+        {
+            CurHp = 0;
+        }
     }
 }
