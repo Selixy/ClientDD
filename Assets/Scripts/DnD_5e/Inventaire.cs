@@ -10,9 +10,5 @@ namespace DnD.DnD_5e
         {
 
         }
-
-        public bool TransferTo(Item_DnD_5e item, Inventaire_DnD_5e target)
-            => base.TransferTo(item, target);
-
     }
 }
