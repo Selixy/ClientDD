@@ -1,4 +1,4 @@
-using UnityEngine;
+using System.Collections.Generic;
 
 public enum ArmorType { Light, Medium, Heavy, Shield }
 
@@ -17,7 +17,7 @@ namespace DnD.DnD_5e
                     , Harmony HarmonyFlags = 0
 
                     , int BonusCA = 0
-                    , State requis
+                    , State? requis = null
                     , bool desavantage = false
 
                     )
@@ -29,7 +29,7 @@ namespace DnD.DnD_5e
                          )
         {
             this.BonusCA = BonusCA;
-            this.requis = requis;
+            this.requis = requis ?? new State(0,0,0,0,0,0);
             this.desavantage = desavantage;
         }
     }

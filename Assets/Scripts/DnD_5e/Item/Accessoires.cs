@@ -5,7 +5,7 @@ namespace DnD.DnD_5e
     public class Accessoires : Item_DnD_5e
     {
 
-        public Equipment(string name
+        public Accessoires (string name
                         ,string description = null
                         ,int weight = 0
                         ,int value  = 0
