@@ -8,4 +8,14 @@ public class Inventaire<T> where T : Item
     {
         Content = content ?? new List<T>();
     }
+
+    public bool TransferTo(T item, Inventaire<T> targetInventaire)
+    {
+        if (item == null || targetInventaire == null) return false;
+        if (!Content.Contains(item)) return false;
+
+        Content.Remove(item);
+        targetInventaire.Content.Add(item);
+        return true;
+    }
 }
