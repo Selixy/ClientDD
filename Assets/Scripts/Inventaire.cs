@@ -18,4 +18,11 @@ public class Inventaire<T> where T : Item
         targetInventaire.Content.Add(item);
         return true;
     }
+
+    public void DestructObject(T item)
+    {
+        if (!Content.Contains(item))
+            return;
+        Content.Remove(item);
+    }
 }
