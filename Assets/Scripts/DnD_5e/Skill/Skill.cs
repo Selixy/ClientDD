@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DnD.DnD_5e
@@ -15,9 +16,21 @@ namespace DnD.DnD_5e
     {
         public ActivContext Context;
 
-        public Skill_DnD_5e(ActivContext Context)
+        public List<DamageComponent> Damage;
+
+
+        public Skill_DnD_5e(int    IndexUser
+                           ,ActivContext Context
+                           ,string Name = "[Unknown Skill_DnD_5e]"
+                           ,List<DamageComponent> damage  = null
+                           )
+                           :base(IndexUser
+                                ,Name
+                                )
         {
             this.Context = Context;
+            this.Damage  = damage;
+
         }
     }
 }
