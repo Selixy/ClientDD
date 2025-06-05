@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 
-public class Inventaire
+public class Inventaire<T> where T : Item
 {
-    public List<Item> Content { get; private set; }
+    public List<T> Content { get; private set; }
 
-    public Inventaire(List<Item> Content = null)
+    public Inventaire(List<T> content = null)
     {
-        this.Content = Content;
+        Content = content ?? new List<T>();
     }
 }
