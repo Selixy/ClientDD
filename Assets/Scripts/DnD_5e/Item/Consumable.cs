@@ -6,6 +6,14 @@ namespace DnD.DnD_5e
     {
         public string Effect { get; set; }
 
+        public enum Types
+        {
+            potion              = 0,             
+            munition            = 1,        
+            ration              = 2,        
+        }
+        
+
         public Consumable(string name
                          , string description = null
                          , int weight = 0
@@ -22,14 +30,11 @@ namespace DnD.DnD_5e
                               , weight
                               , value
                               , HarmonyFlags
-                              , nombre
-                              , effect
-                              , damage
                               )
         {
-            nombre = nombre;
-            damage = damage;
-            effect = effect;
+            this.nombre = nombre;
+            this.damage = damage;
+            this.effect = effect;
         }
 
     }
