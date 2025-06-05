@@ -39,16 +39,15 @@ namespace DnD.DnD_5e
 
     public class Entity_DnD_5e : Entity
     {
-        public string            Race         { get; private set; }
-        public string            Class        { get; private set; }
-        public State             Stats        { get; private set; }
-        public State             Modifiers    { get; private set; }
+        public string            Race           { get; protected set; }
+        public string            Class          { get; protected set; }
+        public State             Stats          { get; protected set; }
+        public State             Modifiers      { get; protected set; }
 
-        public ActivContext      fightContext { get; set; }
+        public ActivContext      fightContext   { get; set; }
 
-        public int               Gold         { get; private set; }
-        public List<Item_DnD_5e> Inventory    { get; private set; } = new List<Item_DnD_5e>();
-        public List<State>       Debuffs      { get; private set; } = new List<State>();
+        public List<State>           Debuffs    { get; protected set; } = new List<State>();
+        public new Inventaire_DnD_5e Inventaire { get; protected set; }
 
 
         public Entity_DnD_5e(string name       = "[Unknown Entity]"
@@ -59,6 +58,7 @@ namespace DnD.DnD_5e
                             ,int    hpMax      = 1
                             ,State? stats      = null
                             ,State? modifiers  = null
+                            ,Inventaire_DnD_5e Inventaire = null
                             )
                             : base(name
                                   ,lvl
@@ -66,10 +66,11 @@ namespace DnD.DnD_5e
                                   ,hpMax
                                   )
         {
-            Race      = race;
-            Class     = className;
-            Stats     = stats     ?? new State(10, 10, 10, 10, 10, 10);
-            Modifiers = modifiers ?? Stats.mod;
+            this.Race       = race;
+            this.Class      = className;
+            this.Stats      = stats      ?? new State(10, 10, 10, 10, 10, 10);
+            this.Modifiers  = modifiers  ?? Stats.mod;
+            this.Inventaire = Inventaire ?? new Inventaire_DnD_5e();
         }
     }
 }
