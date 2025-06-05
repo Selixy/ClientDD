@@ -1,11 +1,28 @@
 using System.Collections.Generic;
 
-public class Inventaire
+public class Inventaire<T> where T : Item
 {
-    public List<Item> Content { get; private set; }
+    public List<T> Content { get; private set; }
 
-    public Inventaire(List<Item> Content = null)
+    public Inventaire(List<T> content = null)
     {
-        this.Content = Content;
+        Content = content ?? new List<T>();
+    }
+
+    public bool TransferTo(T item, Inventaire<T> targetInventaire)
+    {
+        if (item == null || targetInventaire == null) return false;
+        if (!Content.Contains(item)) return false;
+
+        Content.Remove(item);
+        targetInventaire.Content.Add(item);
+        return true;
+    }
+
+    public void DestructObject(T item)
+    {
+        if (!Content.Contains(item))
+            return;
+        Content.Remove(item);
     }
 }

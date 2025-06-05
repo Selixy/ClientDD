@@ -2,12 +2,13 @@ using System.Collections.Generic;
 
 public class Entity
 {
-    public string Name    { get; protected set; }
-    public int    Lvl     { get; protected set; }
-    public int    Exp     { get; protected set; }
-    public int    HpMax   { get; protected set; }
-    public int    CurHp   { get; protected set; }
-    public int    HpBonus { get; protected set; }
+    public string           Name       { get; protected set; }
+    public int              Lvl        { get; protected set; }
+    public int              Exp        { get; protected set; }
+    public int              HpMax      { get; protected set; }
+    public int              CurHp      { get; protected set; }
+    public int              HpBonus    { get; protected set; }
+    public Inventaire<Item> Inventaire { get; protected set; }
 
     public virtual void TakeDamage(int amount)
     {
@@ -22,9 +23,9 @@ public class Entity
     }
 
     public Entity(string name = "[Unknown Entity]"
-                 ,int lvl = 1
-                 ,int exp = 0
-                 ,int hpMax = 1
+                 ,int lvl     = 1
+                 ,int exp     = 0
+                 ,int hpMax   = 1
                  )
     {
         Name  = name;

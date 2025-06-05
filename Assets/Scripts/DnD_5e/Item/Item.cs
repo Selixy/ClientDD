@@ -31,10 +31,10 @@ namespace DnD.DnD_5e
         public Entity_DnD_5e AttunedTo { get; protected set; }
 
 
-        public Item_DnD_5e(string name
-                          ,string description = null
-                          ,int weight = 0
-                          ,int value  = 0
+        public Item_DnD_5e(string name          = "[Unknown Item DnD 5e]"
+                          ,string description   = null
+                          ,int weight           = 0
+                          ,int value            = 0
                           ,Harmony HarmonyFlags = 0
                           )
                           :base(name
