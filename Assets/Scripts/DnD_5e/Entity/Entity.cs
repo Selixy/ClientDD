@@ -48,6 +48,7 @@ namespace DnD.DnD_5e
 
         public List<State>           Debuffs    { get; protected set; } = new List<State>();
         public new Inventaire_DnD_5e Inventaire { get; protected set; }
+        public new List<Etat>        Etats      { get; protected set; } = new List<Etat>();
 
 
         public Entity_DnD_5e(string name       = "[Unknown Entity]"

@@ -9,6 +9,7 @@ public class Entity
     public int              CurHp      { get; protected set; }
     public int              HpBonus    { get; protected set; }
     public Inventaire<Item> Inventaire { get; protected set; }
+    public List<Etat>       Etats      { get; protected set; }
 
 
     public Entity(string name = "[Unknown Entity]"
