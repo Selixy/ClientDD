@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 
-public class Inventaire<T> where T : Item
+public class Inventaire<TItem>
 {
-    public List<T> Content { get; private set; }
+    public List<TItem> Content { get; private set; }
 
-    public Inventaire(List<T> content = null)
+    public Inventaire(List<TItem> content = null)
     {
-        Content = content ?? new List<T>();
+        Content = content ?? new List<TItem>();
     }
 
-    public bool TransferTo(T item, Inventaire<T> targetInventaire)
+    public bool TransferTo(TItem item, Inventaire<TItem> targetInventaire)
     {
         if (item == null || targetInventaire == null) return false;
         if (!Content.Contains(item)) return false;
@@ -19,7 +19,7 @@ public class Inventaire<T> where T : Item
         return true;
     }
 
-    public void DestructObject(T item)
+    public void DestructObject(TItem item)
     {
         if (!Content.Contains(item))
             return;
