@@ -25,7 +25,7 @@ namespace DnD.DnD_5e
         Unique             = 0 << 5         // Objet unique dans le monde
     }
 
-    public class Item_DnD_5e : Item
+    public class Item_DnD_5e : Item<Entity_DnD_5e, Etat_DnD_5e>
     {
         public Harmony    HarmonyFlags { get; protected set; }
         public Entity_DnD_5e AttunedTo { get; protected set; }
@@ -49,17 +49,7 @@ namespace DnD.DnD_5e
             Value = value;
         }
 
-        public override void Equip(Entity Entity)
-        {
-            if (Entity is Entity_DnD_5e dndEntity)
-            {
-                PossessTo = dndEntity;
-            }
-            else
-            {
-                Debug.LogError("Equip : l'entité passée n'est pas du type Entity_DnD_5e !");
-            }
-        }
+
 
         public virtual bool IsAttuned(Entity_DnD_5e entity)
         {
