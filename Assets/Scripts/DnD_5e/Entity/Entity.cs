@@ -37,7 +37,7 @@ namespace DnD.DnD_5e
         }
     }
 
-    public class Entity_DnD_5e : Entity
+    public class Entity_DnD_5e : Entity<Item_DnD_5e, Etat_DnD_5e>
     {
         public string            Race           { get; protected set; }
         public string            Class          { get; protected set; }
@@ -45,9 +45,7 @@ namespace DnD.DnD_5e
         public State             Modifiers      { get; protected set; }
 
         public ActivContext      fightContext   { get; set; }
-
         public List<State>           Debuffs    { get; protected set; } = new List<State>();
-        public new Inventaire_DnD_5e Inventaire { get; protected set; }
 
 
         public Entity_DnD_5e(string name       = "[Unknown Entity]"
@@ -64,13 +62,15 @@ namespace DnD.DnD_5e
                                   ,lvl
                                   ,exp
                                   ,hpMax
+                                  ,Inventaire ?? new Inventaire_DnD_5e()
                                   )
         {
             this.Race       = race;
             this.Class      = className;
             this.Stats      = stats      ?? new State(10, 10, 10, 10, 10, 10);
             this.Modifiers  = modifiers  ?? Stats.mod;
-            this.Inventaire = Inventaire ?? new Inventaire_DnD_5e();
+
         }
+
     }
 }
