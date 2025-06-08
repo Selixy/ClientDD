@@ -55,8 +55,13 @@ public class Entity<TItem, TEtat>
         }
     }
 
-    public void RemoveEtat(TEtat etat)
+    public virtual void RemoveEtat(TEtat etat)
     {
         Etats.Remove(etat);
+    }
+
+    public virtual void AddEtat(TEtat etat)
+    {
+        Etats.Add(etat);
     }
 }

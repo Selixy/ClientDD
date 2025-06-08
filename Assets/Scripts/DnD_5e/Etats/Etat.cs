@@ -63,7 +63,7 @@ namespace DnD.DnD_5e
             int jet = entity.Roll(this.SType.Value);
             if (TrySave(entity, jet))
             {
-                //entity.RemoveEtat(this); // Prévoir cette méthode sur Entity_DnD_5e
+                entity.RemoveEtat(this);
             }
         }
 
@@ -72,9 +72,14 @@ namespace DnD.DnD_5e
             return DC_Sauvegarde.HasValue && jet >= DC_Sauvegarde.Value;
         }
         
-        public override void OnRemove(Entity_DnD_5e entity)
+        public override void OnRemove()
         {
-            base.OnRemove(entity);
+            base.OnRemove();
+        }
+
+        public override void OnAply(Entity_DnD_5e entity)
+        {
+            base.OnAply(entity);
         }
     }
 }

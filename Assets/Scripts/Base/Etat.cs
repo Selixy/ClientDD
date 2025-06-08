@@ -8,12 +8,15 @@ public enum EtatType
 }
 
 public class Etat<TItem, TEntity>
+    where TEntity : class
 {
-    public string    Nom         { get; set; }
-    public string    Description { get; set; }
-    public EtatType  Type        { get; set; }
-    public int       Duree       { get; set; } // Nombre de tours, -1 = permanent
-    public bool      EstVisible  { get; set; } = true;
+    public string    Nom         { get; protected set; }
+    public string    Description { get; protected set; }
+    public EtatType  Type        { get; protected set; }
+    public int       Duree       { get; protected set; } // Nombre de tours, -1 = permanent
+    public bool      EstVisible  { get; protected set; } = true;
+    public TEntity   Owner       { get; protected set; } 
+
 
     public Etat(string nom
                ,string description
@@ -29,5 +32,38 @@ public class Etat<TItem, TEntity>
 
     public virtual void OnTurnStart(TEntity entite) { }
     public virtual void OnTurnEnd(TEntity entite)   { }
-    public virtual void OnRemove(TEntity entite)    { }
+
+    public virtual void OnRemove()    
+    { 
+        ReflectMethod(this.Owner, "RemoveEtat", this);
+        this.Owner = null;
+    }
+
+    public virtual void OnAply(TEntity entity)      
+    { 
+        ReflectMethod(entity, "AddEtat", this);
+        this.Owner = entity;
+    }
+
+    public virtual void Trasfert(TEntity newEntity)
+    {
+        OnRemove();
+        OnAply(newEntity);
+    }
+
+    void ReflectMethod(object o, string methodName, params object[] args)
+    {
+        if (o == null || string.IsNullOrEmpty(methodName))
+            return;
+
+        var method = o.GetType().GetMethod(methodName);
+        if (method != null)
+        {
+            var parameters = method.GetParameters();
+            if (parameters.Length == args.Length)
+                method.Invoke(o, args);
+            else if (parameters.Length == 0)
+                method.Invoke(o, null);
+        }
+    }
 }

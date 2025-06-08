@@ -111,6 +111,16 @@ namespace DnD.DnD_5e
 
         }
 
+        public override void RemoveEtat(Etat_DnD_5e etat)
+        {
+            base.RemoveEtat(etat);
+        }
+
+        public override void AddEtat(Etat_DnD_5e etat)
+        {
+            base.AddEtat(etat);
+        }
+
         public int Roll(DnDRollType rollType)
         {
             switch (rollType)
