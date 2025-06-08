@@ -13,17 +13,18 @@ namespace DnD.DnD_5e
 
     public abstract class Etat_DnD_5e : Etat<Item_DnD_5e, Entity_DnD_5e>
     {
-        public SaveCheckTiming SaveTiming     { get; protected set; } = SaveCheckTiming.None;
-        public int?            DC_Sauvegarde  { get; protected set; }
-        public DnDRollType?    SType          { get; protected set; }
+        public SaveCheckTiming? SaveTiming     { get; protected set; }
+        public int?             DC_Sauvegarde  { get; protected set; }
+        public DnDRollType?     SType          { get; protected set; }
 
 
-        protected Etat_DnD_5e(string       nom          =  "[Unknown Etat DnD 5e]"
-                             ,string       description  =  null
-                             ,EtatType     type         =  0
-                             ,int          duree        =  -1
-                             ,DnDRollType? SType        =  null
-                             ,int?         dc           =  null
+        protected Etat_DnD_5e(string        nom           = "[Unknown Etat DnD 5e]"
+                             ,string        description   = null
+                             ,EtatType      type          = 0
+                             ,int           duree         = -1
+                             ,DnDRollType?  SType         = null
+                             ,int?          dc            = null
+                             ,SaveCheckTiming? SaveTiming = SaveCheckTiming.None
                              )
                              :base(nom
                                   ,description
@@ -55,7 +56,6 @@ namespace DnD.DnD_5e
             }
         }
 
-        // Fonction centrale pour la logique de save
         protected virtual void TryRemoveWithSave(Entity_DnD_5e entity)
         {
             if (!DC_Sauvegarde.HasValue || this.SType == null) return;
