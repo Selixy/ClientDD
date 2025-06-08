@@ -36,6 +36,45 @@ namespace DnD.DnD_5e
             }
         }
     }
+    
+    public enum DnDRollType
+    {
+        // Jets de sauvegarde (Saving Throws)
+        StrengthSave,
+        DexteritySave,
+        ConstitutionSave,
+        IntelligenceSave,
+        WisdomSave,
+        CharismaSave,
+
+        // Jet de caractéristique
+        Strength,
+        Dexterity,
+        Constitution,
+        Intelligence,
+        Wisdom,
+        Charisma,
+
+        // Jets de compétence (Skill Checks)
+        Acrobatics,
+        AnimalHandling,
+        Arcana,
+        Athletics,
+        Deception,
+        History,
+        Insight,
+        Intimidation,
+        Investigation,
+        Medicine,
+        Nature,
+        Perception,
+        Performance,
+        Persuasion,
+        Religion,
+        SleightOfHand,
+        Stealth,
+        Survival,
+    }
 
     public class Entity_DnD_5e : Entity<Item_DnD_5e, Etat_DnD_5e>
     {
@@ -72,5 +111,57 @@ namespace DnD.DnD_5e
 
         }
 
+        public int Roll(DnDRollType rollType)
+        {
+            switch (rollType)
+            {
+                // --- Caractéristiques brutes ---
+                case DnDRollType.Strength:         return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Str);
+                case DnDRollType.Dexterity:        return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Dex);
+                case DnDRollType.Constitution:     return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Con);
+                case DnDRollType.Intelligence:     return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Int);
+                case DnDRollType.Wisdom:           return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Wis);
+                case DnDRollType.Charisma:         return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Cha);
+
+                // --- Jets de sauvegarde ---
+                case DnDRollType.StrengthSave:     return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Str);
+                case DnDRollType.DexteritySave:    return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Dex);
+                case DnDRollType.ConstitutionSave: return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Con);
+                case DnDRollType.IntelligenceSave: return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Int);
+                case DnDRollType.WisdomSave:       return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Wis);
+                case DnDRollType.CharismaSave:     return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Cha);
+
+                // --- Compétences : Force ---
+                case DnDRollType.Athletics:        return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Str);
+
+                // --- Compétences : Dextérité ---
+                case DnDRollType.Acrobatics:       return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Dex);
+                case DnDRollType.SleightOfHand:    return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Dex);
+                case DnDRollType.Stealth:          return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Dex);
+
+                // --- Compétences : Intelligence ---
+                case DnDRollType.Arcana:           return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Int);
+                case DnDRollType.History:          return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Int);
+                case DnDRollType.Investigation:    return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Int);
+                case DnDRollType.Nature:           return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Int);
+                case DnDRollType.Religion:         return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Int);
+
+                // --- Compétences : Sagesse ---
+                case DnDRollType.AnimalHandling:   return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Wis);
+                case DnDRollType.Insight:          return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Wis);
+                case DnDRollType.Medicine:         return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Wis);
+                case DnDRollType.Perception:       return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Wis);
+                case DnDRollType.Survival:         return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Wis);
+
+                // --- Compétences : Charisme ---
+                case DnDRollType.Deception:        return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Cha);
+                case DnDRollType.Intimidation:     return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Cha);
+                case DnDRollType.Performance:      return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Cha);
+                case DnDRollType.Persuasion:       return new Dice { Number = 1, Value = 20 }.Roll(this.Modifiers.Cha);
+
+                default:
+                    return new Dice { Number = 1, Value = 20 }.Roll();
+            }
+        }
     }
 }

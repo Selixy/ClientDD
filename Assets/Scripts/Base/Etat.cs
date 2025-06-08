@@ -28,5 +28,6 @@ public class Etat<TItem, TEntity>
     }
 
     public virtual void OnTurnStart(TEntity entite) { }
+    public virtual void OnTurnEnd(TEntity entite)   { }
     public virtual void OnRemove(TEntity entite)    { }
 }
