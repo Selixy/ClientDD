@@ -1,11 +1,14 @@
-using UnityEngine;
+using System.Collections.Generic;
 
-
-public class Skill
+public class Skill<TEntity>
 {
-    public string Name        { get; protected set; }
-    public bool   IsAvailable { get; protected set; }
-    public int    IndexUser   { get; protected set; }
+    public string  Name             { get; protected set; }
+    public int     IndexUser        { get; protected set; }
+    public bool    IsAvailable      { get; protected set; }
+    public bool    ForceUnavailable { get; protected set; }
+    public TEntity Caster           { get; protected set; }
+
+    private bool lastAviability = false;
 
     public Skill(int IndexUser
                 ,string Name   = "[Unknown Skill]"
@@ -15,14 +18,26 @@ public class Skill
         this.IndexUser = IndexUser;
     }
 
-    public virtual void Cast()
+    public virtual void Update()
     {
-        Debug.Log("Compétence générique utilisée.");
+        if (ForceUnavailable) IsAvailable = false;
+
+        if (lastAviability != IsAvailable)
+        {
+            if (IsAvailable)
+            {
+                OnSkillUnavailable();
+            }
+            else
+            {
+                OnSkillAvailable();
+            }
+            lastAviability = IsAvailable;
+        }
     }
 
-    public virtual void DeactivSkil()
-    {
-
-    }
+    public    virtual void Cast()               { }
+    public    virtual void DeactivSkil()        { }
+    protected virtual void OnSkillUnavailable() { }
+    protected virtual void OnSkillAvailable()   { }
 }
-
