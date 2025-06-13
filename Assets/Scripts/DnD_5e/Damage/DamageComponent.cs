@@ -41,7 +41,7 @@ namespace DnD.DnD_5e
         public int Roll()
         {
             if (Dice.HasValue)
-                return Dice.Value.Roll();
+                return Dice.Value.Roll().total;
             if (Flat.HasValue)
                 return Flat.Value;
 

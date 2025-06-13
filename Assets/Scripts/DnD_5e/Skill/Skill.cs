@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 namespace DnD.DnD_5e
 {
@@ -27,38 +28,67 @@ namespace DnD.DnD_5e
         Summon        = 1 << 7
     }
 
+    public enum AttackRoll
+    {
+        None,
+        Strength,
+        Dexterity,
+        Constitution,
+        Intelligence,
+        Wisdom,
+        Charisma,
+    }
+
     public class Skill_DnD_5e : Skill<Entity_DnD_5e>
     {
-        public ActivContext          Context   {get; protected set;}
-        public SkillType             SkillType {get; protected set;}
+        public ActivContext          Context    {get; protected set;}
+        public SkillType             SkillType  {get; protected set;}
 
-        public int                   Range     {get; protected set;}
-        public List<Etat_DnD_5e>     Etat      {get; protected set;}
-        public List<DamageComponent> Damage    {get; protected set;}
+        public int                   Range      {get; protected set;}
+        public AttackRoll            AttackRoll {get; protected set;}
+        public List<Etat_DnD_5e>     Etat       {get; protected set;}
+        public List<DamageComponent> Damage     {get; protected set;}
 
 
         public Skill_DnD_5e(int                   IndexUser
-                           ,string                Name      = "[Unknown Skill_DnD_5e]"
-                           ,ActivContext          Context   = ActivContext.NoFight
-                           ,int                   Range     = 5
-                           ,List<DamageComponent> damage    = null
-                           ,List<Etat_DnD_5e>     Etat      = null
-                           ,SkillType             SkillType = SkillType.Utility
+                           ,string                Name       = "[Unknown Skill_DnD_5e]"
+                           ,ActivContext          Context    = ActivContext.NoFight
+                           ,int                   Range      = 5
+                           ,List<DamageComponent> damage     = null
+                           ,List<Etat_DnD_5e>     Etat       = null
+                           ,SkillType             SkillType  = SkillType.Utility
+                           ,AttackRoll            AttackRoll = AttackRoll.None               
                            )
                            :base(IndexUser
                                 ,Name
                                 )
         {
-            this.Context = Context;
-            this.Damage  = damage;
+            this.Context    = Context;
+            this.Damage     = damage;
+            this.AttackRoll = AttackRoll;
         }
 
         public override void Cast()
         {
             if ((SkillType & SkillType.AttackRoll) != 0)
             {
+                // Convertit AttackRoll → DnDRollType
+                DnDRollType rollType = AttackRoll switch
+                {
+                    AttackRoll.Strength     => DnDRollType.Strength,
+                    AttackRoll.Dexterity    => DnDRollType.Dexterity,
+                    AttackRoll.Constitution => DnDRollType.Constitution,
+                    AttackRoll.Intelligence => DnDRollType.Intelligence,
+                    AttackRoll.Wisdom       => DnDRollType.Wisdom,
+                    AttackRoll.Charisma     => DnDRollType.Charisma,
+                    _ => throw new System.Exception("Invalid AttackRoll value")
+                };
 
+                var (total, rolls) = Caster.Roll(rollType);
+                int keptDie = rolls.FirstOrDefault(r => r.kept).value;
             }
+
+            base.Cast();
         }
 
         public override void Update()

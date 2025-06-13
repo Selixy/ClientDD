@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 public enum DiceType
 {
@@ -77,17 +78,55 @@ public struct Dice
         return rng.Next(1, Value + 1);
     }
 
-    public int Roll(int Bonus = 0)
+    public (int total, List<(int value, bool kept)> rolls) Roll(int bonus = 0, int isAdvantage = 0)
     {
-        int total = 0;
+        int total1 = 0;
+        List<int> rolls1 = new();
         for (int i = 0; i < Number; i++)
         {
             int r = RollOnce();
-            total += r;
-            RollFX(Bonus, r);
+            total1 += r;
+            rolls1.Add(r);
+            RollFX(bonus, r);
         }
-        return total + Bonus;
+
+        // Pas d'avantage/désavantage → retour direct
+        if (isAdvantage == 0)
+        {
+            List<(int, bool)> finalRolls = new();
+            foreach (var r in rolls1)
+                finalRolls.Add((r, true));
+
+            return (total1 + bonus, finalRolls);
+        }
+
+        // Deuxième série de jets pour comparaison
+        int total2 = 0;
+        List<int> rolls2 = new();
+        for (int i = 0; i < Number; i++)
+        {
+            int r = RollOnce();
+            total2 += r;
+            rolls2.Add(r);
+            RollFX(bonus, r);
+        }
+
+        // Choix du meilleur ou du pire selon avantage/désavantage
+        bool useSecond = (isAdvantage < 0 && total2 < total1) || (isAdvantage > 0 && total2 > total1);
+        var usedRolls = useSecond ? rolls2 : rolls1;
+        var discardedRolls = useSecond ? rolls1 : rolls2;
+        int total = useSecond ? total2 : total1;
+
+        List<(int, bool)> allRolls = new();
+        foreach (var r in usedRolls)
+            allRolls.Add((r, true));
+        foreach (var r in discardedRolls)
+            allRolls.Add((r, false));
+
+        return (total + bonus, allRolls);
     }
+
+
 
     private void RollFX(int Bonus = 0, int R = 1)
     {

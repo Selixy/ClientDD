@@ -60,7 +60,7 @@ namespace DnD.DnD_5e
         {
             if (!DC_Sauvegarde.HasValue || this.SType == null) return;
 
-            int jet = entity.Roll(this.SType.Value);
+            int jet = entity.Roll(this.SType.Value).total;
             if (TrySave(entity, jet))
             {
                 entity.RemoveEtat(this);
