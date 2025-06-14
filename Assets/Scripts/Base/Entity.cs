@@ -18,6 +18,7 @@ public class Entity<TItem, TEtat>
                  ,int lvl     = 1
                  ,int exp     = 0
                  ,int hpMax   = 1
+                 ,int curHp   = 1
                  ,Inventaire<TItem> Inventaire = null
                  )
     {
@@ -25,7 +26,7 @@ public class Entity<TItem, TEtat>
         this.Lvl   = lvl;
         this.Exp   = exp;
         this.HpMax = hpMax;
-        this.CurHp = hpMax;
+        this.CurHp = curHp;
     }
 
 
