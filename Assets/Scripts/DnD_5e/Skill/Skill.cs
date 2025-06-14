@@ -84,7 +84,12 @@ namespace DnD.DnD_5e
                     _ => throw new System.Exception("Invalid AttackRoll value")
                 };
 
-                var (total, rolls) = Caster.Roll(rollType);
+                var (total, rolls) = Caster.Roll(rollType
+                                                ,bonus: 0
+                                                ,AddAdvantage: 0
+                                                ,Context: ContextRoll.AttackRoll
+                                                );
+                                                
                 int keptDie = rolls.FirstOrDefault(r => r.kept).value;
             }
 
