@@ -90,7 +90,7 @@ namespace DnD.DnD_5e
                                                 ,Context: ContextRoll.AttackRoll
                                                 );
                                                 
-                int keptDie = rolls.FirstOrDefault(r => r.kept).value;
+                int Natural = rolls.FirstOrDefault(r => r.kept).value;
             }
 
             base.Cast();

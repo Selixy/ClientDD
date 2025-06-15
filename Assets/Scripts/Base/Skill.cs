@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Numerics;
 
 public class Skill<TEntity>
 {
@@ -7,6 +8,7 @@ public class Skill<TEntity>
     public bool    IsAvailable      { get; protected set; }
     public bool    ForceUnavailable { get; protected set; }
     public TEntity Caster           { get; protected set; }
+
 
     private bool lastAviability = false;
 
@@ -40,4 +42,23 @@ public class Skill<TEntity>
     public    virtual void DeactivSkil()        { }
     protected virtual void OnSkillUnavailable() { }
     protected virtual void OnSkillAvailable()   { }
+    
+    private List<TEntity> GetIsHit(Vector3 position, float rayon)
+    {
+        var hits = new List<TEntity>();
+
+        foreach (var entity in EntityRegistry<TEntity>.All)
+        {
+            if (entity is Entity<TItem, TEtat> e)
+            {
+                float distance = Vector3.Distance(e.Transform.Position, position);
+                if (distance <= rayon)
+                {
+                    hits.Add((TEntity)(object)e);
+                }
+            }
+        }
+
+        return hits;
+    }
 }

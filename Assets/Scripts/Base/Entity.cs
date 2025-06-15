@@ -12,6 +12,7 @@ public class Entity<TItem, TEtat>
     public int               HpBonus    { get; protected set; }
     public Inventaire<TItem> Inventaire { get; protected set; }
     public List<TEtat>       Etats      { get; protected set; } = new List<TEtat>();
+    public Transform3D       Transform  { get; protected set; }
 
 
     public Entity(string name = "[Unknown Entity]"
@@ -27,6 +28,7 @@ public class Entity<TItem, TEtat>
         this.Exp   = exp;
         this.HpMax = hpMax;
         this.CurHp = curHp;
+        EntityRegistry<TItem, TEtat>.Register(this);
     }
 
 
