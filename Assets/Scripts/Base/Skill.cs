@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-public class Skill<TEntity>
+public class Skill
 {
     public string  Name             { get; protected set; }
     public int     IndexUser        { get; protected set; }
     public bool    IsAvailable      { get; protected set; }
     public bool    ForceUnavailable { get; protected set; }
-    public TEntity Caster           { get; protected set; }
+    public Entity  Caster           { get; protected set; }
 
 
     private bool lastAviability = false;
@@ -38,23 +38,31 @@ public class Skill<TEntity>
         }
     }
 
-    public    virtual void Cast()               { }
-    public    virtual void DeactivSkil()        { }
-    protected virtual void OnSkillUnavailable() { }
-    protected virtual void OnSkillAvailable()   { }
+    public    virtual void Cast()                  { }
+    public    virtual void DeactivSkil()           { }
+    protected virtual void OnSkillUnavailable()    { }
+    protected virtual void OnSkillAvailable()      { }
     
-    private List<TEntity> GetIsHit(Vector3 position, float rayon)
-    {
-        var hits = new List<TEntity>();
 
-        foreach (var entity in EntityRegistry<TEntity>.All)
+    public    virtual void CastToEntity(Entity e) { }
+    
+    public    virtual List<Entity> ChooseEntity(List<Entity> e)
+    {
+        return null;
+    }
+
+    protected List<Entity> GetInRange(Vector3 position, float rayon)
+    {
+        var hits = new List<Entity>();
+
+        foreach (var entity in EntityRegistry.All)
         {
-            if (entity is Entity<TItem, TEtat> e)
+            if (entity is Entity e)
             {
                 float distance = Vector3.Distance(e.Transform.Position, position);
                 if (distance <= rayon)
                 {
-                    hits.Add((TEntity)(object)e);
+                    hits.Add((Entity)(object)e);
                 }
             }
         }

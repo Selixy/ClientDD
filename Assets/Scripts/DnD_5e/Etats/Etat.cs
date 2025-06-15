@@ -11,7 +11,7 @@ namespace DnD.DnD_5e
         Custom           // Si besoin d’un cas particulier
     }
 
-    public abstract class Etat_DnD_5e : Etat<Item_DnD_5e, Entity_DnD_5e>
+    public abstract class Etat_DnD_5e : Etat
     {
         public SaveCheckTiming? SaveTiming     { get; protected set; }
         public int?             DC_Sauvegarde  { get; protected set; }
@@ -36,24 +36,26 @@ namespace DnD.DnD_5e
             this.SType         = SType;
         }
 
-        public override void OnTurnStart(Entity_DnD_5e entity)
+        public override void OnTurnStart(Entity entity)
         {
-            base.OnTurnStart(entity);
-
+            if (entity is not Entity_DnD_5e) return;
             if (SaveTiming == SaveCheckTiming.StartOfTurn)
             {
-                TryRemoveWithSave(entity);
+                TryRemoveWithSave((Entity_DnD_5e)entity);
             }
+
+            base.OnTurnStart(entity);
         }
 
-        public override void OnTurnEnd(Entity_DnD_5e entity)
+        public override void OnTurnEnd(Entity entity)
         {
-            base.OnTurnEnd(entity);
-
+            if (entity is not Entity_DnD_5e) return;
             if (SaveTiming == SaveCheckTiming.EndOfTurn)
             {
-                TryRemoveWithSave(entity);
+                TryRemoveWithSave((Entity_DnD_5e)entity);
             }
+
+            base.OnTurnEnd(entity);
         }
 
         protected virtual void TryRemoveWithSave(Entity_DnD_5e entity)
@@ -77,7 +79,7 @@ namespace DnD.DnD_5e
             base.OnRemove();
         }
 
-        public override void OnAply(Entity_DnD_5e entity)
+        public override void OnAply(Entity entity)
         {
             base.OnAply(entity);
         }

@@ -7,15 +7,14 @@ public enum EtatType
     Malefique
 }
 
-public class Etat<TItem, TEntity>
-    where TEntity : class
+public class Etat
 {
     public string    Nom         { get; protected set; }
     public string    Description { get; protected set; }
     public EtatType  Type        { get; protected set; }
     public int       Duree       { get; protected set; } // Nombre de tours, -1 = permanent
     public bool      EstVisible  { get; protected set; } = true;
-    public TEntity   Owner       { get; protected set; } 
+    public Entity   Owner       { get; protected set; } 
 
 
     public Etat(string nom
@@ -30,8 +29,8 @@ public class Etat<TItem, TEntity>
         Duree       = duree;
     }
 
-    public virtual void OnTurnStart(TEntity entite) { }
-    public virtual void OnTurnEnd(TEntity entite)   { }
+    public virtual void OnTurnStart(Entity entite) { }
+    public virtual void OnTurnEnd(Entity entite)   { }
 
     public virtual void OnRemove()    
     { 
@@ -39,13 +38,13 @@ public class Etat<TItem, TEntity>
         this.Owner = null;
     }
 
-    public virtual void OnAply(TEntity entity)      
+    public virtual void OnAply(Entity entity)      
     { 
         ReflectMethod(entity, "AddEtat", this);
         this.Owner = entity;
     }
 
-    public virtual void Trasfert(TEntity newEntity)
+    public virtual void Trasfert(Entity newEntity)
     {
         OnRemove();
         OnAply(newEntity);

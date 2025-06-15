@@ -25,7 +25,7 @@ namespace DnD.DnD_5e
         Unique             = 0 << 5         // Objet unique dans le monde
     }
 
-    public class Item_DnD_5e : Item<Entity_DnD_5e, Etat_DnD_5e>
+    public class Item_DnD_5e : Item
     {
         public Harmony    HarmonyFlags { get; protected set; }
         public Entity_DnD_5e AttunedTo { get; protected set; }

@@ -98,7 +98,7 @@ namespace DnD.DnD_5e
         }
     }
 
-    public class Entity_DnD_5e : Entity<Item_DnD_5e, Etat_DnD_5e>
+    public class Entity_DnD_5e : Entity
     {
         public string            Race           { get; protected set; }
         public string            Class          { get; protected set; }
@@ -177,12 +177,12 @@ namespace DnD.DnD_5e
             return 2;
         }
 
-        public override void RemoveEtat(Etat_DnD_5e etat)
+        public override void RemoveEtat(Etat etat)
         {
             base.RemoveEtat(etat);
         }
 
-        public override void AddEtat(Etat_DnD_5e etat)
+        public override void AddEtat(Etat etat)
         {
             base.AddEtat(etat);
         }

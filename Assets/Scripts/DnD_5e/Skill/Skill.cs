@@ -16,16 +16,17 @@ namespace DnD.DnD_5e
     [System.Flags]
     public enum SkillType
     {
-        Utility       = 1 << 0,
+        None          = 0,
 
-        Melee         = 1 << 1,
-        Ranged        = 1 << 2,
-        Attack        = 1 << 3,
-        AttackRoll    = 1 << 4,
+        Targetable    = 1 << 1,
+        AreaOfEffect  = 1 << 2,
 
-        Buff          = 1 << 5,
-        Debuff        = 1 << 6,
-        Summon        = 1 << 7
+        Buff          = 1 << 3,
+        Debuff        = 1 << 4,
+        Summon        = 1 << 5,
+        Utility       = 1 << 6,
+        Attack        = 1 << 7,
+        AttackRoll    = 1 << 8,
     }
 
     public enum AttackRoll
@@ -39,7 +40,7 @@ namespace DnD.DnD_5e
         Charisma,
     }
 
-    public class Skill_DnD_5e : Skill<Entity_DnD_5e>
+    public class Skill_DnD_5e : Skill
     {
         public ActivContext          Context    {get; protected set;}
         public SkillType             SkillType  {get; protected set;}
@@ -70,6 +71,12 @@ namespace DnD.DnD_5e
 
         public override void Cast()
         {
+            if ((SkillType & SkillType.Targetable) != 0)
+            {
+                List<Entity> e = base.GetInRange(this.Caster.Transform.Position, this.Range);
+                List<Entity> Target = base.ChooseEntity(e);
+            }
+
             if ((SkillType & SkillType.AttackRoll) != 0)
             {
                 // Convertit AttackRoll → DnDRollType
@@ -84,11 +91,11 @@ namespace DnD.DnD_5e
                     _ => throw new System.Exception("Invalid AttackRoll value")
                 };
 
-                var (total, rolls) = Caster.Roll(rollType
-                                                ,bonus: 0
-                                                ,AddAdvantage: 0
-                                                ,Context: ContextRoll.AttackRoll
-                                                );
+                var (total, rolls) = ((Entity_DnD_5e)Caster).Roll(rollType
+                                                                 ,bonus: 0
+                                                                 ,AddAdvantage: 0
+                                                                 ,Context: ContextRoll.AttackRoll
+                                                                 );
                                                 
                 int Natural = rolls.FirstOrDefault(r => r.kept).value;
             }

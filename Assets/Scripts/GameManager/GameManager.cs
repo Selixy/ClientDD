@@ -10,11 +10,11 @@ public partial class GameManager : MonoBehaviour
     public List<Player_DnD_5e> players = new List<Player_DnD_5e>();
 }
 
-public static class EntityRegistry<TItem, TEtat>
+public static class EntityRegistry
 {
-    public static List<Entity<TItem, TEtat>> All = new();
+    public static List<Entity> All = new();
 
-    public static void Register(Entity<TItem, TEtat> e) => All.Add(e);
-    public static void Unregister(Entity<TItem, TEtat> e) => All.Remove(e);
+    public static void Register(Entity e) => All.Add(e);
+    public static void Unregister(Entity e) => All.Remove(e);
     public static void Clear() => All.Clear();
 }
