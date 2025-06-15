@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 
-public class Entity<TItem, TEtat>
+public class Entity
 
 {
     public string            Name       { get; protected set; }
@@ -10,22 +10,25 @@ public class Entity<TItem, TEtat>
     public int               HpMax      { get; protected set; }
     public int               CurHp      { get; protected set; }
     public int               HpBonus    { get; protected set; }
-    public Inventaire<TItem> Inventaire { get; protected set; }
-    public List<TEtat>       Etats      { get; protected set; } = new List<TEtat>();
+    public Inventaire        Inventaire { get; protected set; }
+    public List<Etat>        Etats      { get; protected set; } = new List<Etat>();
+    public Transform3D       Transform  { get; protected set; }
 
 
     public Entity(string name = "[Unknown Entity]"
                  ,int lvl     = 1
                  ,int exp     = 0
                  ,int hpMax   = 1
-                 ,Inventaire<TItem> Inventaire = null
+                 ,int curHp   = 1
+                 ,Inventaire  Inventaire = null
                  )
     {
         this.Name  = name;
         this.Lvl   = lvl;
         this.Exp   = exp;
         this.HpMax = hpMax;
-        this.CurHp = hpMax;
+        this.CurHp = curHp;
+        EntityRegistry.Register(this);
     }
 
 
@@ -55,12 +58,12 @@ public class Entity<TItem, TEtat>
         }
     }
 
-    public virtual void RemoveEtat(TEtat etat)
+    public virtual void RemoveEtat(Etat etat)
     {
         Etats.Remove(etat);
     }
 
-    public virtual void AddEtat(TEtat etat)
+    public virtual void AddEtat(Etat etat)
     {
         Etats.Add(etat);
     }
