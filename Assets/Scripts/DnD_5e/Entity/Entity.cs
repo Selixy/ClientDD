@@ -103,6 +103,8 @@ namespace DnD.DnD_5e
         public string            Race           { get; protected set; }
         public string            Class          { get; protected set; }
         public State             Stats          { get; protected set; }
+        public int               AC             { get; protected set; }
+        public int               CritBonus      { get; protected set; }
         public State             Modifiers      { get; protected set; }
         public int               Maitrise       { get; protected set; }
         public Dictionary<DnDRollType, SkillData> SkillMastery { get; protected set; }
@@ -121,6 +123,8 @@ namespace DnD.DnD_5e
                             ,int?   curHp        = null
                             ,int?   maitrise     = null
                             ,State? stats        = null
+                            ,int    AC           = 10
+                            ,int    CritBonus    = 0
                             ,State? modifiers    = null
                             ,Dictionary<DnDRollType, SkillData> skillMastery = null
                             ,Inventaire_DnD_5e Inventaire = null
@@ -136,6 +140,8 @@ namespace DnD.DnD_5e
             this.Race         = race;
             this.Class        = className;
             this.Stats        = stats        ?? new State(10, 10, 10, 10, 10, 10);
+            this.AC           = AC;
+            this.CritBonus    = CritBonus;
             this.Modifiers    = modifiers    ?? Stats.mod;
             this.Maitrise     = maitrise     ?? GetProficiencyBonus(base.Lvl);
             this.SkillMastery = skillMastery ?? null;
