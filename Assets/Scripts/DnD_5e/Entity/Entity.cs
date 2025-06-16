@@ -111,8 +111,9 @@ namespace DnD.DnD_5e
         public int               CritBonus      { get; protected set; }
         public State             Modifiers      { get; protected set; }
         public int               Maitrise       { get; protected set; }
-        public Dictionary<DnDRollType, SkillData> SkillMastery { get; protected set; }
 
+        public Dictionary<DnDRollType, SkillData> SkillMastery  { get; protected set; }
+        public Dictionary<DamageType, int?> DamageResistance    { get; protected set; }
 
         public ActivContext      fightContext   { get; set; }
         public List<State>           Debuffs    { get; protected set; } = new List<State>();
@@ -131,6 +132,7 @@ namespace DnD.DnD_5e
                             ,int    CritBonus    = 0
                             ,State? modifiers    = null
                             ,Dictionary<DnDRollType, SkillData> skillMastery = null
+                            ,Dictionary<DamageType, int?> DamageResistance = null
                             ,Inventaire_DnD_5e Inventaire = null
                             )
                             : base(name
@@ -141,14 +143,15 @@ namespace DnD.DnD_5e
                                   ,Inventaire ?? new Inventaire_DnD_5e()
                                   )
         {
-            this.Race         = race;
-            this.Class        = className;
-            this.Stats        = stats        ?? new State(10, 10, 10, 10, 10, 10);
-            this.AC           = AC;
-            this.CritBonus    = CritBonus;
-            this.Modifiers    = modifiers    ?? Stats.mod;
-            this.Maitrise     = maitrise     ?? GetProficiencyBonus(base.Lvl);
-            this.SkillMastery = skillMastery ?? null;
+            this.Race             = race;
+            this.Class            = className;
+            this.Stats            = stats        ?? new State(10, 10, 10, 10, 10, 10);
+            this.AC               = AC;
+            this.CritBonus        = CritBonus;
+            this.Modifiers        = modifiers    ?? Stats.mod;
+            this.Maitrise         = maitrise     ?? GetProficiencyBonus(base.Lvl);
+            this.SkillMastery     = skillMastery ?? null;
+            this.DamageResistance = DamageResistance ?? null;
         }
 
         public static Dictionary<DnDRollType, SkillData> CompleteSkillDictionary(Dictionary<DnDRollType, SkillData> input)
@@ -300,5 +303,42 @@ namespace DnD.DnD_5e
             }
             return result;
         }
+
+        public void ApplyDamage(Damage damage)
+        {
+            int total = 0;
+
+            // Parcourt tous les champs de la struct Damage (Contondant, Feu, etc.)
+            foreach (var entry in damage.GetType().GetFields())
+            {
+                // On ne traite que les champs de type int (ignore par ex. Magique)
+                if (entry.FieldType != typeof(int)) continue;
+
+                // Récupère la valeur brute du champ (par exemple : 6 feu)
+                int baseValue = (int)entry.GetValue(damage);
+                if (baseValue <= 0) continue; // Ignore les dégâts nuls
+
+                // Essaie de convertir le nom du champ en DamageType (ex: "Feu" → DamageType.Feu)
+                if (!Enum.TryParse<DamageType>(entry.Name, ignoreCase: true, out var type))
+                    continue;
+
+                // Récupère la résistance associée à ce type de dégât
+                int? resistance = DamageResistance != null && DamageResistance.TryGetValue(type, out var val) ? val : 0;
+
+                // Si la résistance est null → immunité totale → on ignore les dégâts
+                if (resistance == null)
+                    continue;
+
+                // Applique le facteur : 1 = moitié, 2 = quart, -1 = double, etc.
+                double modifier = Math.Pow(0.5, resistance.Value);
+
+                // Ajoute les dégâts modifiés au total
+                total += (int)Math.Round(baseValue * modifier);
+            }
+
+            // Applique le total de dégâts à l'entité
+            base.TakeDamage(total);
+        }
+
     }
 }

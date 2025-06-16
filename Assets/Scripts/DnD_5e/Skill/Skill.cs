@@ -143,16 +143,16 @@ namespace DnD.DnD_5e
                     }
                 }
 
-                ApplayDamage(target, r_damage);
+                ApplyDamage(target, r_damage);
                 ApplayEtats(target, r_etat);
             }
         }
 
-        private void ApplayDamage(Entity target
-                                 ,Damage damage
-                                 )
+        private void ApplyDamage(Entity target
+                                ,Damage damage
+                                )
         {
-            
+            ((Entity_DnD_5e)target).ApplyDamage(damage);
         }
 
         private void ApplayEtats(Entity target
