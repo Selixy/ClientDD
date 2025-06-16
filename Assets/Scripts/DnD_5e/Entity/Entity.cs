@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using System;
+
 
 namespace DnD.DnD_5e
 {
@@ -40,6 +42,8 @@ namespace DnD.DnD_5e
     
     public enum DnDRollType
     {
+        None,
+
         // Jet de caractéristique
         Strength,
         Dexterity,
@@ -205,64 +209,64 @@ namespace DnD.DnD_5e
             return (0, 0);
         }
 
-        public (int total, List<(int value, bool kept)> rolls) Roll(DnDRollType rollType, int bonus = 0, int AddAdvantage = 0, ContextRoll Context = ContextRoll.Unknown)
+        public (int total, int natural) Roll(DnDRollType rollType, int bonus = 0, int AddAdvantage = 0, ContextRoll Context = ContextRoll.Unknown)
         {
             int mod = rollType switch
             {
-                // --- Caractéristiques brutes ---
-                DnDRollType.Strength         => this.Modifiers.Str,
-                DnDRollType.Dexterity        => this.Modifiers.Dex,
-                DnDRollType.Constitution     => this.Modifiers.Con,
-                DnDRollType.Intelligence     => this.Modifiers.Int,
-                DnDRollType.Wisdom           => this.Modifiers.Wis,
-                DnDRollType.Charisma         => this.Modifiers.Cha,
+                // caractéristiques
+                DnDRollType.Strength         => Modifiers.Str,
+                DnDRollType.Dexterity        => Modifiers.Dex,
+                DnDRollType.Constitution     => Modifiers.Con,
+                DnDRollType.Intelligence     => Modifiers.Int,
+                DnDRollType.Wisdom           => Modifiers.Wis,
+                DnDRollType.Charisma         => Modifiers.Cha,
 
-                // --- Jets de sauvegarde ---
-                DnDRollType.StrengthSave     => this.Modifiers.Str,
-                DnDRollType.DexteritySave    => this.Modifiers.Dex,
-                DnDRollType.ConstitutionSave => this.Modifiers.Con,
-                DnDRollType.IntelligenceSave => this.Modifiers.Int,
-                DnDRollType.WisdomSave       => this.Modifiers.Wis,
-                DnDRollType.CharismaSave     => this.Modifiers.Cha,
+                // jets de sauvegarde
+                DnDRollType.StrengthSave     => Modifiers.Str,
+                DnDRollType.DexteritySave    => Modifiers.Dex,
+                DnDRollType.ConstitutionSave => Modifiers.Con,
+                DnDRollType.IntelligenceSave => Modifiers.Int,
+                DnDRollType.WisdomSave       => Modifiers.Wis,
+                DnDRollType.CharismaSave     => Modifiers.Cha,
 
-                // --- Compétences : Force ---
-                DnDRollType.Athletics        => this.Modifiers.Str,
-
-                // --- Compétences : Dextérité ---
-                DnDRollType.Acrobatics       => this.Modifiers.Dex,
-                DnDRollType.SleightOfHand    => this.Modifiers.Dex,
-                DnDRollType.Stealth          => this.Modifiers.Dex,
-
-                // --- Compétences : Intelligence ---
-                DnDRollType.Arcana           => this.Modifiers.Int,
-                DnDRollType.History          => this.Modifiers.Int,
-                DnDRollType.Investigation    => this.Modifiers.Int,
-                DnDRollType.Nature           => this.Modifiers.Int,
-                DnDRollType.Religion         => this.Modifiers.Int,
-
-                // --- Compétences : Sagesse ---
-                DnDRollType.AnimalHandling   => this.Modifiers.Wis,
-                DnDRollType.Insight          => this.Modifiers.Wis,
-                DnDRollType.Medicine         => this.Modifiers.Wis,
-                DnDRollType.Perception       => this.Modifiers.Wis,
-                DnDRollType.Survival         => this.Modifiers.Wis,
-
-                // --- Compétences : Charisme ---
-                DnDRollType.Deception        => this.Modifiers.Cha,
-                DnDRollType.Intimidation     => this.Modifiers.Cha,
-                DnDRollType.Performance      => this.Modifiers.Cha,
-                DnDRollType.Persuasion       => this.Modifiers.Cha,
+                // compétences
+                DnDRollType.Athletics        => Modifiers.Str,
+                DnDRollType.Acrobatics       => Modifiers.Dex,
+                DnDRollType.SleightOfHand    => Modifiers.Dex,
+                DnDRollType.Stealth          => Modifiers.Dex,
+                DnDRollType.Arcana           => Modifiers.Int,
+                DnDRollType.History          => Modifiers.Int,
+                DnDRollType.Investigation    => Modifiers.Int,
+                DnDRollType.Nature           => Modifiers.Int,
+                DnDRollType.Religion         => Modifiers.Int,
+                DnDRollType.AnimalHandling   => Modifiers.Wis,
+                DnDRollType.Insight          => Modifiers.Wis,
+                DnDRollType.Medicine         => Modifiers.Wis,
+                DnDRollType.Perception       => Modifiers.Wis,
+                DnDRollType.Survival         => Modifiers.Wis,
+                DnDRollType.Deception        => Modifiers.Cha,
+                DnDRollType.Intimidation     => Modifiers.Cha,
+                DnDRollType.Performance      => Modifiers.Cha,
+                DnDRollType.Persuasion       => Modifiers.Cha,
 
                 _ => 0
             };
 
-            int isAdvantage = 0;
-            isAdvantage += AddAdvantage;
-
             var (mastery, flat) = GetSkillBonuses(rollType);
             bonus += mastery + flat;
 
-            return new Dice { Number = 1, Value = 20 }.Roll(mod + bonus, isAdvantage);
+            var d20 = new Dice(1, 20, DiceType.Neutre);
+            var (total, rolls) = d20.Roll(mod + bonus, AddAdvantage);
+
+            var natural = rolls.FirstOrDefault(r => r.kept).value;
+
+            return (total, natural);
         }
+
+        public virtual (int total, int natural) RequestJDS(DnDRollType rollType, ContextRoll Context)
+        {
+            return this.Roll(rollType, Context: Context);
+        }
+
     }
 }

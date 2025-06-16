@@ -73,6 +73,16 @@ public struct Dice
         this.Type = type;
     }
 
+    public static Dice operator *(Dice d, int multiplier)
+    {
+        return new Dice(d.Number * multiplier, d.Value, d.Type);
+    }
+
+    public static Dice operator +(Dice d, int extra)
+    {
+        return new Dice(d.Number + extra, d.Value, d.Type);
+    }
+
     private int RollOnce()
     {
         return rng.Next(1, Value + 1);
