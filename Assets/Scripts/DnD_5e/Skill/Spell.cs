@@ -14,7 +14,7 @@ namespace DnD.DnD_5e
                     ,int                   Radius        = 0
                     ,int?                  DC            = null
                     ,List<DamageComponent> damage        = null
-                    ,List<DamageComponent> damageJDS     = null
+                    ,int                   damageJDS     = 0
                     ,List<Etat_DnD_5e>     Etat          = null
                     ,List<Etat_DnD_5e>     EtatJDS       = null
                     ,SkillType             SkillType     = SkillType.Utility

@@ -50,7 +50,7 @@ namespace DnD.DnD_5e
         public List<Etat_DnD_5e>     Etats          {get; protected set;}
         public List<Etat_DnD_5e>     EtatsJDS       {get; protected set;}
         public List<DamageComponent> Damages        {get; protected set;}
-        public List<DamageComponent> DamagesJDS     {get; protected set;}
+        public int                   DamagesJDS     {get; protected set;}
         public DnDRollType           SauvegardeRoll {get; protected set;}
 
 
@@ -61,7 +61,7 @@ namespace DnD.DnD_5e
                            ,int                   Radius        = 0
                            ,int?                  DC            = null
                            ,List<DamageComponent> Damages       = null
-                           ,List<DamageComponent> DamagesJDS    = null
+                           ,int                   DamagesJDS    = 1
                            ,List<Etat_DnD_5e>     Etats         = null
                            ,List<Etat_DnD_5e>     EtatsJDS      = null
                            ,SkillType             SkillType     = SkillType.Utility
@@ -86,71 +86,82 @@ namespace DnD.DnD_5e
             var targets = SelectEntityHit();
 
             List<DamageComponent> damages = this.Damages;
-            List<DamageComponent> damagesJDS = this.DamagesJDS;
             if ((AttackRoll & AttackRoll.None) == 0)
             {
                 var (Success, Crit) = TryAttackRoll(targets);
                 if (Crit)
                 {
                     damages = GetCriticalDamage(0);
-                    damagesJDS = GetCriticalDamage(0);
                 }
                 else
                     targets = Success;
             }
 
-            ApplyToTarget(targets, damages, damagesJDS);
+            ApplyToTarget(targets, damages);
             
             base.Cast();
         }
 
-        public void ApplyToTarget(List<Entity> targets
-                                 ,List<DamageComponent> damages
-                                 ,List<DamageComponent> damagesJDS
-                                 )
+        public void ApplyToTarget(List<Entity> targets, List<DamageComponent> damages)
         {
+            if (targets == null || targets.Count == 0)
+                return;
+
+            // Vérifie que le lanceur est bien une entité DnD_5e
+            if (this.Caster is not Entity_DnD_5e casterDnD)
+                return;
+
+            // Calcule les dégâts une fois
+            Damage damage = casterDnD.DamageRoll(damages);
+
             foreach (var target in targets)
             {
-                if (targets == null) return;
+                // Vérifie que le cyble est bien une entité DnD_5e
+                if (target is not Entity_DnD_5e targetDnD)
+                    continue; 
+                
+                // États par défaut
+                var r_etat = this.Etats;
+                var r_damage = damage;
 
-                var etats  = this.Etats;
-                int dc = this.DC != null ? this.DC.Value : 0;
-
-                var r_damage = damagesJDS;
-                var r_etat   = this.EtatsJDS;
+                int dc = this.DC ?? 0;
 
                 if (this.SauvegardeRoll != DnDRollType.None)
                 {
-                    var result = ((Entity_DnD_5e)target).RequestJDS(this.SauvegardeRoll
-                                                                   ,ContextRoll.SauvegardeRoll
-                                                                   );
-                    if (result.total <= dc)
+                    var result = ((Entity_DnD_5e)target).RequestJDS(this.SauvegardeRoll, ContextRoll.SauvegardeRoll);
+
+                    if (result.total >= dc) // Le jet de sauvegarde a réussi
                     {
-                        r_damage = damages;
-                        r_etat   = this.Etats;
+                        r_etat = this.EtatsJDS;
+
+                        switch (this.DamagesJDS)
+                        {
+                            default: break;                            // dégâts normaux
+                            case 1: r_damage = damage / 2; break;      // moitié des dégâts
+                            case 2: r_damage = new Damage(); break;    // pas de dégâts
+                        }
                     }
-                    ApplayDamage(target, r_damage);
-                    ApplayEtats(target, r_etat);
                 }
 
+                ApplayDamage(target, r_damage);
+                ApplayEtats(target, r_etat);
             }
         }
 
-        private void ApplayDamage(Entity targets
-                                 ,List<DamageComponent> damages
+        private void ApplayDamage(Entity target
+                                 ,Damage damage
                                  )
         {
             
         }
 
-        private void ApplayEtats(Entity targets
+        private void ApplayEtats(Entity target
                                 ,List<Etat_DnD_5e> etats
                                 )
         {
-            List<Etat> etatsBase = new List<Etat>();
             foreach (var e in etats)
             {
-                etatsBase.Add(e);
+                target.AddEtat(e);
             }
         }
 
