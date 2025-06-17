@@ -54,6 +54,7 @@ public enum DiceType
     SavingThrow,   // jet de sauvegarde générique
     Attack,        // attaque générique
     Spell,         // pour les sorts génériques
+    HitDie         // pour les dé de vie lors de la monté de niveau
 }
 
 public struct Dice

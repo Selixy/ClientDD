@@ -104,13 +104,13 @@ namespace DnD.DnD_5e
 
     public class Entity_DnD_5e : Entity
     {
-        public string            Race           { get; protected set; }
-        public string            Class          { get; protected set; }
-        public State             Stats          { get; protected set; }
-        public int               AC             { get; protected set; }
-        public int               CritBonus      { get; protected set; }
-        public State             Modifiers      { get; protected set; }
-        public int               Maitrise       { get; protected set; }
+        public string               Race           { get; protected set; }
+        public List<Class_DnD_5e>   Classes          { get; protected set; }
+        public State                Stats          { get; protected set; }
+        public int                  AC             { get; protected set; }
+        public int                  CritBonus      { get; protected set; }
+        public State                Modifiers      { get; protected set; }
+        public int                  Maitrise       { get; protected set; }
 
         public Dictionary<DnDRollType, SkillData> SkillMastery  { get; protected set; }
         public Dictionary<DamageType, int?> DamageResistance    { get; protected set; }
@@ -119,21 +119,21 @@ namespace DnD.DnD_5e
         public List<State>           Debuffs    { get; protected set; } = new List<State>();
 
 
-        public Entity_DnD_5e(string name         = "[Unknown Entity]"
-                            ,string race         = null
-                            ,string className    = null
-                            ,int    lvl          = 1
-                            ,int    exp          = 0
-                            ,int    hpMax        = 1
-                            ,int?   curHp        = null
-                            ,int?   maitrise     = null
-                            ,State? stats        = null
-                            ,int    AC           = 10
-                            ,int    CritBonus    = 0
-                            ,State? modifiers    = null
+        public Entity_DnD_5e(string             name       = "[Unknown Entity]"
+                            ,string             race       = null
+                            ,List<Class_DnD_5e> classes    = null
+                            ,int                lvl        = 1
+                            ,int                exp        = 0
+                            ,int                hpMax      = 1
+                            ,int?               curHp      = null
+                            ,int?               maitrise   = null
+                            ,State?             stats      = null
+                            ,int                AC         = 10
+                            ,int                CritBonus  = 0
+                            ,State?             modifiers  = null
                             ,Dictionary<DnDRollType, SkillData> skillMastery = null
-                            ,Dictionary<DamageType, int?> DamageResistance = null
-                            ,Inventaire_DnD_5e Inventaire = null
+                            ,Dictionary<DamageType, int?> DamageResistance   = null
+                            ,Inventaire_DnD_5e Inventaire                    = null
                             )
                             : base(name
                                   ,lvl
@@ -144,13 +144,13 @@ namespace DnD.DnD_5e
                                   )
         {
             this.Race             = race;
-            this.Class            = className;
-            this.Stats            = stats        ?? new State(10, 10, 10, 10, 10, 10);
+            this.Classes          = classes;
+            this.Stats            = stats            ?? new State(10, 10, 10, 10, 10, 10);
             this.AC               = AC;
             this.CritBonus        = CritBonus;
-            this.Modifiers        = modifiers    ?? Stats.mod;
-            this.Maitrise         = maitrise     ?? GetProficiencyBonus(base.Lvl);
-            this.SkillMastery     = skillMastery ?? null;
+            this.Modifiers        = modifiers        ?? Stats.mod;
+            this.Maitrise         = maitrise         ?? GetProficiencyBonus(base.Lvl);
+            this.SkillMastery     = skillMastery     ?? null;
             this.DamageResistance = DamageResistance ?? null;
         }
 
@@ -340,5 +340,11 @@ namespace DnD.DnD_5e
             base.TakeDamage(total);
         }
 
+        public void Lvl_Up(int hpAddMax)
+        {
+            base.HpMax += hpAddMax;
+            base.Heal(hpAddMax);
+            base.Lvl_Up();
+        }
     }
 }
