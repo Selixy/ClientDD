@@ -10,6 +10,7 @@ namespace DnD.DnD_5e
         public Spell(int                   IndexUser
                     ,string                Name          = "[Unknown Spell DnD5e]"
                     ,ActivContext          Context       = ActivContext.NoFight
+                    ,int                   Targetable    = 0
                     ,int                   Range         = 5
                     ,int                   Radius        = 0
                     ,int?                  DC            = null
@@ -24,6 +25,7 @@ namespace DnD.DnD_5e
                     :base(IndexUser
                          ,Name
                          ,Context
+                         ,Targetable
                          ,Range
                          ,Radius
                          ,DC
