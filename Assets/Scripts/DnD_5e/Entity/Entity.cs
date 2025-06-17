@@ -105,7 +105,7 @@ namespace DnD.DnD_5e
     public class Entity_DnD_5e : Entity
     {
         public string               Race           { get; protected set; }
-        public List<Class_DnD_5e>   Classes          { get; protected set; }
+        public List<Class_DnD_5e>   Classes        { get; protected set; }
         public State                Stats          { get; protected set; }
         public int                  AC             { get; protected set; }
         public int                  CritBonus      { get; protected set; }
