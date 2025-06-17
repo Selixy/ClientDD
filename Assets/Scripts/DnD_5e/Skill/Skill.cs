@@ -13,20 +13,16 @@ namespace DnD.DnD_5e
         Reaction      = 1 << 3
     }
 
-    [System.Flags]
     public enum SkillType
     {
-        None          = 0,
-
-        Targetable    = 1 << 1,
-
-        Buff          = 1 << 2,
-        Debuff        = 1 << 3,
-        Summon        = 1 << 4,
-        Utility       = 1 << 5,
-        Attack        = 1 << 6
+        None,
+        Buff,
+        Debuff,
+        Summon,
+        Utility,
+        Attack
     }
-
+    
     public enum AttackRoll
     {
         None,
@@ -43,6 +39,7 @@ namespace DnD.DnD_5e
         public ActivContext          Context        {get; protected set;}
         public SkillType             SkillType      {get; protected set;}
 
+        public int                   Targetable     {get; protected set;}
         public int                   Range          {get; protected set;}
         public int                   Radius         {get; protected set;}
         public int?                  DC             {get; protected set;}
@@ -57,6 +54,7 @@ namespace DnD.DnD_5e
         public Skill_DnD_5e(int                   IndexUser
                            ,string                Name          = "[Unknown Skill_DnD_5e]"
                            ,ActivContext          Context       = ActivContext.NoFight
+                           ,int                   Targetable    = 0
                            ,int                   Range         = 5
                            ,int                   Radius        = 0
                            ,int?                  DC            = null
@@ -72,6 +70,7 @@ namespace DnD.DnD_5e
                                 ,Name
                                 )
         {
+            this.Targetable     = Targetable;
             this.Context        = Context;
             this.Damages        = Damages;
             this.DamagesJDS     = DamagesJDS;
@@ -192,10 +191,10 @@ namespace DnD.DnD_5e
         private List<Entity> SelectEntityHit()
         {
             List<Entity> e = null;
-            if ((SkillType & SkillType.Targetable) != 0)
+            if (this.Targetable > 0)
             {
                 e = base.GetInRange(this.Caster.Transform.Position, this.Range);
-                e = base.ChooseEntity(e);
+                e = base.ChooseEntity(e, this.Targetable);
             } 
             else if (this.Radius < 0)
             {

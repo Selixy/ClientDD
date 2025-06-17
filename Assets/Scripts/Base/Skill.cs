@@ -46,7 +46,7 @@ public class Skill
 
     public    virtual void CastToEntity(Entity e) { }
     
-    public    virtual List<Entity> ChooseEntity(List<Entity> e)
+    public    virtual List<Entity> ChooseEntity(List<Entity> e, int n)
     {
         return null;
     }
