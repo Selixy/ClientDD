@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using System;
+
 
 namespace DnD.DnD_5e
 {
@@ -40,6 +42,8 @@ namespace DnD.DnD_5e
     
     public enum DnDRollType
     {
+        None,
+
         // Jet de caractéristique
         Strength,
         Dexterity,
@@ -103,10 +107,13 @@ namespace DnD.DnD_5e
         public string            Race           { get; protected set; }
         public string            Class          { get; protected set; }
         public State             Stats          { get; protected set; }
+        public int               AC             { get; protected set; }
+        public int               CritBonus      { get; protected set; }
         public State             Modifiers      { get; protected set; }
         public int               Maitrise       { get; protected set; }
-        public Dictionary<DnDRollType, SkillData> SkillMastery { get; protected set; }
 
+        public Dictionary<DnDRollType, SkillData> SkillMastery  { get; protected set; }
+        public Dictionary<DamageType, int?> DamageResistance    { get; protected set; }
 
         public ActivContext      fightContext   { get; set; }
         public List<State>           Debuffs    { get; protected set; } = new List<State>();
@@ -121,8 +128,11 @@ namespace DnD.DnD_5e
                             ,int?   curHp        = null
                             ,int?   maitrise     = null
                             ,State? stats        = null
+                            ,int    AC           = 10
+                            ,int    CritBonus    = 0
                             ,State? modifiers    = null
                             ,Dictionary<DnDRollType, SkillData> skillMastery = null
+                            ,Dictionary<DamageType, int?> DamageResistance = null
                             ,Inventaire_DnD_5e Inventaire = null
                             )
                             : base(name
@@ -133,12 +143,15 @@ namespace DnD.DnD_5e
                                   ,Inventaire ?? new Inventaire_DnD_5e()
                                   )
         {
-            this.Race         = race;
-            this.Class        = className;
-            this.Stats        = stats        ?? new State(10, 10, 10, 10, 10, 10);
-            this.Modifiers    = modifiers    ?? Stats.mod;
-            this.Maitrise     = maitrise     ?? GetProficiencyBonus(base.Lvl);
-            this.SkillMastery = skillMastery ?? null;
+            this.Race             = race;
+            this.Class            = className;
+            this.Stats            = stats        ?? new State(10, 10, 10, 10, 10, 10);
+            this.AC               = AC;
+            this.CritBonus        = CritBonus;
+            this.Modifiers        = modifiers    ?? Stats.mod;
+            this.Maitrise         = maitrise     ?? GetProficiencyBonus(base.Lvl);
+            this.SkillMastery     = skillMastery ?? null;
+            this.DamageResistance = DamageResistance ?? null;
         }
 
         public static Dictionary<DnDRollType, SkillData> CompleteSkillDictionary(Dictionary<DnDRollType, SkillData> input)
@@ -199,64 +212,133 @@ namespace DnD.DnD_5e
             return (0, 0);
         }
 
-        public (int total, List<(int value, bool kept)> rolls) Roll(DnDRollType rollType, int bonus = 0, int AddAdvantage = 0, ContextRoll Context = ContextRoll.Unknown)
+        public (int total, int natural) Roll(DnDRollType rollType, int bonus = 0, int AddAdvantage = 0, ContextRoll Context = ContextRoll.Unknown)
         {
             int mod = rollType switch
             {
-                // --- Caractéristiques brutes ---
-                DnDRollType.Strength         => this.Modifiers.Str,
-                DnDRollType.Dexterity        => this.Modifiers.Dex,
-                DnDRollType.Constitution     => this.Modifiers.Con,
-                DnDRollType.Intelligence     => this.Modifiers.Int,
-                DnDRollType.Wisdom           => this.Modifiers.Wis,
-                DnDRollType.Charisma         => this.Modifiers.Cha,
+                // caractéristiques
+                DnDRollType.Strength         => Modifiers.Str,
+                DnDRollType.Dexterity        => Modifiers.Dex,
+                DnDRollType.Constitution     => Modifiers.Con,
+                DnDRollType.Intelligence     => Modifiers.Int,
+                DnDRollType.Wisdom           => Modifiers.Wis,
+                DnDRollType.Charisma         => Modifiers.Cha,
 
-                // --- Jets de sauvegarde ---
-                DnDRollType.StrengthSave     => this.Modifiers.Str,
-                DnDRollType.DexteritySave    => this.Modifiers.Dex,
-                DnDRollType.ConstitutionSave => this.Modifiers.Con,
-                DnDRollType.IntelligenceSave => this.Modifiers.Int,
-                DnDRollType.WisdomSave       => this.Modifiers.Wis,
-                DnDRollType.CharismaSave     => this.Modifiers.Cha,
+                // jets de sauvegarde
+                DnDRollType.StrengthSave     => Modifiers.Str,
+                DnDRollType.DexteritySave    => Modifiers.Dex,
+                DnDRollType.ConstitutionSave => Modifiers.Con,
+                DnDRollType.IntelligenceSave => Modifiers.Int,
+                DnDRollType.WisdomSave       => Modifiers.Wis,
+                DnDRollType.CharismaSave     => Modifiers.Cha,
 
-                // --- Compétences : Force ---
-                DnDRollType.Athletics        => this.Modifiers.Str,
-
-                // --- Compétences : Dextérité ---
-                DnDRollType.Acrobatics       => this.Modifiers.Dex,
-                DnDRollType.SleightOfHand    => this.Modifiers.Dex,
-                DnDRollType.Stealth          => this.Modifiers.Dex,
-
-                // --- Compétences : Intelligence ---
-                DnDRollType.Arcana           => this.Modifiers.Int,
-                DnDRollType.History          => this.Modifiers.Int,
-                DnDRollType.Investigation    => this.Modifiers.Int,
-                DnDRollType.Nature           => this.Modifiers.Int,
-                DnDRollType.Religion         => this.Modifiers.Int,
-
-                // --- Compétences : Sagesse ---
-                DnDRollType.AnimalHandling   => this.Modifiers.Wis,
-                DnDRollType.Insight          => this.Modifiers.Wis,
-                DnDRollType.Medicine         => this.Modifiers.Wis,
-                DnDRollType.Perception       => this.Modifiers.Wis,
-                DnDRollType.Survival         => this.Modifiers.Wis,
-
-                // --- Compétences : Charisme ---
-                DnDRollType.Deception        => this.Modifiers.Cha,
-                DnDRollType.Intimidation     => this.Modifiers.Cha,
-                DnDRollType.Performance      => this.Modifiers.Cha,
-                DnDRollType.Persuasion       => this.Modifiers.Cha,
+                // compétences
+                DnDRollType.Athletics        => Modifiers.Str,
+                DnDRollType.Acrobatics       => Modifiers.Dex,
+                DnDRollType.SleightOfHand    => Modifiers.Dex,
+                DnDRollType.Stealth          => Modifiers.Dex,
+                DnDRollType.Arcana           => Modifiers.Int,
+                DnDRollType.History          => Modifiers.Int,
+                DnDRollType.Investigation    => Modifiers.Int,
+                DnDRollType.Nature           => Modifiers.Int,
+                DnDRollType.Religion         => Modifiers.Int,
+                DnDRollType.AnimalHandling   => Modifiers.Wis,
+                DnDRollType.Insight          => Modifiers.Wis,
+                DnDRollType.Medicine         => Modifiers.Wis,
+                DnDRollType.Perception       => Modifiers.Wis,
+                DnDRollType.Survival         => Modifiers.Wis,
+                DnDRollType.Deception        => Modifiers.Cha,
+                DnDRollType.Intimidation     => Modifiers.Cha,
+                DnDRollType.Performance      => Modifiers.Cha,
+                DnDRollType.Persuasion       => Modifiers.Cha,
 
                 _ => 0
             };
 
-            int isAdvantage = 0;
-            isAdvantage += AddAdvantage;
-
             var (mastery, flat) = GetSkillBonuses(rollType);
             bonus += mastery + flat;
 
-            return new Dice { Number = 1, Value = 20 }.Roll(mod + bonus, isAdvantage);
+            var d20 = new Dice(1, 20, DiceType.Neutre);
+            var (total, rolls) = d20.Roll(mod + bonus, AddAdvantage);
+
+            var natural = rolls.FirstOrDefault(r => r.kept).value;
+
+            return (total, natural);
         }
+
+        public virtual (int total, int natural) RequestJDS(DnDRollType rollType, ContextRoll Context)
+        {
+            return this.Roll(rollType, Context: Context);
+        }
+        
+        
+        public Damage DamageRoll(List<DamageComponent> diceList, bool isMagical = false)
+        {
+            Damage result = new Damage { Magique = isMagical };
+
+            foreach (var dd in diceList)
+            {
+                int rolled = dd.Roll();;
+
+                switch (dd.Type)
+                {
+                    case DamageType.Contondant:  result.Contondant += rolled; break;
+                    case DamageType.Perforant:   result.Perforant  += rolled; break;
+                    case DamageType.Tranchant:   result.Tranchant  += rolled; break;
+                    case DamageType.Force:       result.Force      += rolled; break;
+
+                    case DamageType.Feu:         result.Feu        += rolled; break;
+                    case DamageType.Froid:       result.Froid      += rolled; break;
+                    case DamageType.Foudre:      result.Foudre     += rolled; break;
+                    case DamageType.Tonnerre:    result.Tonnerre   += rolled; break;
+
+                    case DamageType.Acide:       result.Acide      += rolled; break;
+                    case DamageType.Poison:      result.Poison     += rolled; break;
+
+                    case DamageType.Radiant:     result.Radiant    += rolled; break;
+                    case DamageType.Nécrotique:  result.Nécrotique += rolled; break;
+                    case DamageType.Psychique:   result.Psychique  += rolled; break;
+                    case DamageType.Heal:        result.Heal       += rolled; break;
+                }
+            }
+            return result;
+        }
+
+        public void ApplyDamage(Damage damage)
+        {
+            int total = 0;
+
+            // Parcourt tous les champs de la struct Damage (Contondant, Feu, etc.)
+            foreach (var entry in damage.GetType().GetFields())
+            {
+                // On ne traite que les champs de type int (ignore par ex. Magique)
+                if (entry.FieldType != typeof(int)) continue;
+
+                // Récupère la valeur brute du champ (par exemple : 6 feu)
+                int baseValue = (int)entry.GetValue(damage);
+                if (baseValue <= 0) continue; // Ignore les dégâts nuls
+
+                // Essaie de convertir le nom du champ en DamageType (ex: "Feu" → DamageType.Feu)
+                if (!Enum.TryParse<DamageType>(entry.Name, ignoreCase: true, out var type))
+                    continue;
+
+                // Récupère la résistance associée à ce type de dégât
+                int? resistance = DamageResistance != null && DamageResistance.TryGetValue(type, out var val) ? val : 0;
+
+                // Si la résistance est null → immunité totale → on ignore les dégâts
+                if (resistance == null)
+                    continue;
+
+                // Applique le facteur : 1 = moitié, 2 = quart, -1 = double, etc.
+                double modifier = Math.Pow(0.5, resistance.Value);
+
+                // Ajoute les dégâts modifiés au total
+                total += (int)Math.Round(baseValue * modifier);
+            }
+
+            // Applique le total de dégâts à l'entité
+            base.TakeDamage(total);
+        }
+
     }
 }

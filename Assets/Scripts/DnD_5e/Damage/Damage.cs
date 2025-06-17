@@ -73,6 +73,29 @@ namespace DnD.DnD_5e
             string type = Magique ? "[magique]" : "[non-magique]";
             return $"Dégâts {type} : " + string.Join(", ", parts);
         }
+
+        public static Damage operator /(Damage d, int divisor)
+        {
+            return new Damage
+            {
+                Magique     = d.Magique, // On garde ce flag tel quel
+                Contondant  = d.Contondant  / divisor,
+                Perforant   = d.Perforant   / divisor,
+                Tranchant   = d.Tranchant   / divisor,
+                Force       = d.Force       / divisor,
+                Feu         = d.Feu         / divisor,
+                Froid       = d.Froid       / divisor,
+                Foudre      = d.Foudre      / divisor,
+                Tonnerre    = d.Tonnerre    / divisor,
+                Acide       = d.Acide       / divisor,
+                Poison      = d.Poison      / divisor,
+                Radiant     = d.Radiant     / divisor,
+                Nécrotique  = d.Nécrotique  / divisor,
+                Psychique   = d.Psychique   / divisor,
+                Heal        = d.Heal        / divisor
+            };
+        }
+
     }
 
     
