@@ -7,7 +7,7 @@ public class Entity
     public string            Name       { get; protected set; }
     public int               Lvl        { get; protected set; }
     public int               Exp        { get; protected set; }
-    public int               HpMax      { get; protected set; }
+    public int               HpMax      { get; internal  set; }
     public int               CurHp      { get; protected set; }
     public int               HpBonus    { get; protected set; }
     public Inventaire        Inventaire { get; protected set; }
@@ -66,5 +66,10 @@ public class Entity
     public virtual void AddEtat(Etat etat)
     {
         Etats.Add(etat);
+    }
+
+    public void Lvl_Up()
+    {
+        Lvl ++;
     }
 }
