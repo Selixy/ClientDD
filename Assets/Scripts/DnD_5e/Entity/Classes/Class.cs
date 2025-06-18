@@ -11,14 +11,25 @@ namespace DnD.DnD_5e
         Martial,
     }
 
+    public enum SpellcastingStyle
+    {
+        None,          // Pas de magie (Barbare)
+        Known,         // Liste fixe de sorts connus (Sorcerer, Bard, Warlock, Ranger)
+        Prepared,      // Préparés à partir d’une liste fixe (Cleric, Druid, Paladin)
+        Grimoire       // Préparés depuis un grimoire (Wizard)
+    }
+
     public class Class_DnD_5e 
     {
-        public string            Name               { get; protected set; }
-        public int               Lvl                { get; protected set; }
-        public ClassArchetype    Archetype          { get; protected set; }
-        public int               HitDie             { get; protected set; }
-        public Entity_DnD_5e     SelfEntity         { get; protected set; }         
-        public List<int>         Choix              { get; protected set; }
+        public string              Name               { get; protected set; }
+        public int                 Lvl                { get; protected set; }
+        public ClassArchetype      Archetype          { get; protected set; }
+        public int                 HitDie             { get; protected set; }
+        public Entity_DnD_5e       SelfEntity         { get; protected set; }         
+        public List<int>           Choix              { get; protected set; }
+        public int[]               NbSpell            { get; protected set; }
+        public SpellcastingStyle   SpellcastingStyle  { get; protected set; }
+        public List<Spell>         Spell              { get; protected set; }
 
         public Dictionary<int, List<LvlUpClass>>      LevelUps { get; protected set; } = new();
         public Dictionary<int, int[]> SpecialCasterProgression { get; protected set; } = new();
@@ -27,6 +38,9 @@ namespace DnD.DnD_5e
                            ,string           Name       = "[Unknown Class DnD 5e]"
                            ,int              Lvl        = 1
                            ,List<int>        Choix      = null
+                           ,int[]            NbSpell    = null
+                           ,List<Spell>      Spell      = null
+                           ,SpellcastingStyle                   SpellcastingStyle = SpellcastingStyle.None
                            ,ClassArchetype                      Archetype  = ClassArchetype.None
                            ,Dictionary<int, int[]>              SpecialCasterProgression = null
                            ,Dictionary<int, List<LvlUpClass>>   LevelUps   = null
@@ -37,8 +51,11 @@ namespace DnD.DnD_5e
             this.Lvl        = Lvl;
             this.Choix      = Choix;
             this.Archetype  = Archetype;
-            this.SpecialCasterProgression = SpecialCasterProgression;
             this.LevelUps   = LevelUps;
+            this.NbSpell    = NbSpell ?? new int[2];
+            this.Spell      = Spell;
+            this.SpellcastingStyle = SpellcastingStyle;
+            this.SpecialCasterProgression = SpecialCasterProgression;
         }
 
         public void Lvl_Up()
