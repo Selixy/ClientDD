@@ -7,7 +7,6 @@ public static class RequestSystem
 
     public static void Enqueue<T>(Request<T> request)
     {
-        // Boxé en object pour stockage homogène
         _queue.Enqueue(request as Request<object>);
     }
 
