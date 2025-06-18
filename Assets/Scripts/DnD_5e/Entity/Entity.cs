@@ -79,6 +79,8 @@ namespace DnD.DnD_5e
         SleightOfHand,
         Stealth,
         Survival,
+
+        Initiative,
     }
 
     public enum ContextRoll
@@ -88,6 +90,7 @@ namespace DnD.DnD_5e
         DamageRoll,
         SauvegardeRoll,
         AbilityRoll,
+        initiativeRoll,
     }
 
     public struct SkillData
@@ -111,12 +114,18 @@ namespace DnD.DnD_5e
         public int                  CritBonus      { get; protected set; }
         public State                Modifiers      { get; protected set; }
         public int                  Maitrise       { get; protected set; }
+        public int                  Initiative     { get; protected set; }
+        public int                  WalkSpeed      { get; protected set; }
+        public int                  ExtraAtaque    { get; protected set; }
+        public int                  ExtraAction    { get; protected set; }
+        public float                SpeedFactor    { get; protected set; }
 
         public Dictionary<DnDRollType, SkillData> SkillMastery  { get; protected set; }
         public Dictionary<DamageType, int?> DamageResistance    { get; protected set; }
 
         public ActivContext      fightContext   { get; set; }
-        public List<State>           Debuffs    { get; protected set; } = new List<State>();
+        public List<State>            Debuffs   { get; protected set; } = new List<State>();
+        public int[]                  Actions   { get; protected set; } = new int[5] {30, 1, 1, 1, 0};  // {Deplacement, Action, BonusAction, Reaction, ExtraAtaque} 
 
 
         public Entity_DnD_5e(string             name       = "[Unknown Entity]"
@@ -129,6 +138,7 @@ namespace DnD.DnD_5e
                             ,int?               maitrise   = null
                             ,State?             stats      = null
                             ,int                AC         = 10
+                            ,int                WalkSpeed  = 30
                             ,int                CritBonus  = 0
                             ,State?             modifiers  = null
                             ,Dictionary<DnDRollType, SkillData> skillMastery = null
@@ -147,6 +157,7 @@ namespace DnD.DnD_5e
             this.Classes          = classes;
             this.Stats            = stats            ?? new State(10, 10, 10, 10, 10, 10);
             this.AC               = AC;
+            this.WalkSpeed        = WalkSpeed;
             this.CritBonus        = CritBonus;
             this.Modifiers        = modifiers        ?? Stats.mod;
             this.Maitrise         = maitrise         ?? GetProficiencyBonus(base.Lvl);
@@ -252,6 +263,8 @@ namespace DnD.DnD_5e
                 DnDRollType.Performance      => Modifiers.Cha,
                 DnDRollType.Persuasion       => Modifiers.Cha,
 
+                DnDRollType.Initiative       => Modifiers.Dex,
+
                 _ => 0
             };
 
@@ -270,7 +283,45 @@ namespace DnD.DnD_5e
         {
             return this.Roll(rollType, Context: Context);
         }
-        
+
+        public virtual int RequestInitiativeRoll()
+        {
+
+            this.Initiative = this.Roll(DnDRollType.Initiative, Context: ContextRoll.initiativeRoll).total;
+            return Initiative;
+        }
+
+        public virtual void StartTurn()
+        {
+            this.Actions = new int[5]
+            {
+                (int)(this.WalkSpeed * this.SpeedFactor), // Déplacement disponible ce tour
+                1 + this.ExtraAction,                     // Actions principales (ex : Haste = +1 action)
+                1,                                        // Bonus action (disponible par défaut)
+                1,                                        // Réaction (disponible au départ)
+                this.ExtraAtaque                          // Attaques supplémentaires (ex : extra attacks)
+            };
+
+            this.fightContext = ActivContext.Action | ActivContext.bonusAction | ActivContext.Reaction;
+
+            foreach (var etat in this.Etats)
+            {
+                etat.OnTurnStart(this);
+            }
+        }
+
+        public virtual void EndTurn()
+        {
+            foreach (int i in new[] { 0, 1, 2, 4 })
+                this.Actions[i] = 0;
+
+            this.fightContext &= ~(ActivContext.Action | ActivContext.bonusAction);
+
+            foreach (var etat in this.Etats)
+            {
+                etat.OnTurnEnd(this);
+            }
+        }
         
         public Damage DamageRoll(List<DamageComponent> diceList, bool isMagical = false)
         {
