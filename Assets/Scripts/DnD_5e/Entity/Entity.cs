@@ -397,5 +397,22 @@ namespace DnD.DnD_5e
             base.Heal(hpAddMax);
             base.Lvl_Up();
         }
+
+        public void UseSkillByIndex(int idexType, int indedxSkill)
+        {
+            switch(idexType)
+            {
+                case  0: break;  // Spell Casting
+                case  1: break;  // InFignter Skill
+                case  2: break;  // Ability Skill
+                case  3: break;  // Spesial Casting
+                default: break;
+            }
+        }
+
+        public void UseSkillByName(string name)
+        {
+            
+        }
     }
 }
