@@ -107,25 +107,32 @@ namespace DnD.DnD_5e
 
     public class Entity_DnD_5e : Entity
     {
-        public string               Race           { get; protected set; }
-        public List<Class_DnD_5e>   Classes        { get; protected set; }
-        public State                Stats          { get; protected set; }
-        public int                  AC             { get; protected set; }
-        public int                  CritBonus      { get; protected set; }
-        public State                Modifiers      { get; protected set; }
-        public int                  Maitrise       { get; protected set; }
-        public int                  Initiative     { get; protected set; }
-        public int                  WalkSpeed      { get; protected set; }
-        public int                  ExtraAtaque    { get; protected set; }
-        public int                  ExtraAction    { get; protected set; }
-        public float                SpeedFactor    { get; protected set; }
+        public string               Race              { get; protected set; }
+        public List<Class_DnD_5e>   Classes           { get; protected set; }
+        public State                Stats             { get; protected set; }
+        public int                  AC                { get; protected set; }
+        public int                  CritBonus         { get; protected set; }
+        public State                Modifiers         { get; protected set; }
+        public int                  Maitrise          { get; protected set; }
+        public int                  Initiative        { get; protected set; }
+        public int                  WalkSpeed         { get; protected set; }
+        public int                  ExtraAtaque       { get; protected set; }
+        public int                  ExtraAction       { get; protected set; }
+        public float                SpeedFactor       { get; protected set; }
+        public int[]                SpellEmplasement  { get; protected set; }
+        public int[]                SpecialRessources { get; protected set; }
 
         public Dictionary<DnDRollType, SkillData> SkillMastery  { get; protected set; }
         public Dictionary<DamageType, int?> DamageResistance    { get; protected set; }
 
-        public ActivContext      fightContext   { get; set; }
-        public List<State>            Debuffs   { get; protected set; } = new List<State>();
-        public int[]                  Actions   { get; protected set; } = new int[5] {30, 1, 1, 1, 0};  // {Deplacement, Action, BonusAction, Reaction, ExtraAtaque} 
+        public ActivContext      fightContext    { get; set; }
+        public List<State>            Debuffs    { get; protected set; } = new List<State>();
+        public int[]                  Actions    { get; protected set; } = new int[5] {30, 1, 1, 1, 0};  // {Deplacement, Action, BonusAction, Reaction, ExtraAtaque}
+
+        public List<Skill>   Spell_FillCaster    { get; protected set; }
+        public List<Skill>   Spell_HalfCaster    { get; protected set; }
+        public List<Skill>   Spell_SpecialCaster { get; protected set; }
+        public List<Skill>   Skill_InFignter     { get; protected set; }
 
 
         public Entity_DnD_5e(string             name       = "[Unknown Entity]"
@@ -142,8 +149,8 @@ namespace DnD.DnD_5e
                             ,int                CritBonus  = 0
                             ,State?             modifiers  = null
                             ,Dictionary<DnDRollType, SkillData> skillMastery = null
-                            ,Dictionary<DamageType, int?> DamageResistance   = null
-                            ,Inventaire_DnD_5e Inventaire                    = null
+                            ,Dictionary<DamageType, int?>   DamageResistance = null
+                            ,Inventaire_DnD_5e              Inventaire       = null
                             )
                             : base(name
                                   ,lvl
@@ -398,21 +405,50 @@ namespace DnD.DnD_5e
             base.Lvl_Up();
         }
 
-        public void UseSkillByIndex(int idexType, int indedxSkill)
+        public void UseSkillByIndex(int indexType, int indexSkill)
         {
-            switch(idexType)
+            Skill skillToUse = null;
+
+            switch (indexType)
             {
-                case  0: break;  // Spell Casting
-                case  1: break;  // InFignter Skill
-                case  2: break;  // Ability Skill
-                case  3: break;  // Spesial Casting
-                default: break;
+                case 0: // Full Caster Spell
+                    if (indexSkill >= 0 && indexSkill < Spell_FillCaster.Count)
+                        skillToUse = Spell_FillCaster[indexSkill];
+                    break;
+
+                case 1: // In-Fighter Skill
+                    if (indexSkill >= 0 && indexSkill < Skill_InFignter.Count)
+                        skillToUse = Skill_InFignter[indexSkill];
+                    break;
+
+                case 2: // Half Caster Spell
+                    if (indexSkill >= 0 && indexSkill < Spell_HalfCaster.Count)
+                        skillToUse = Spell_HalfCaster[indexSkill];
+                    break;
+
+                case 3: // Special Casting
+                    if (indexSkill >= 0 && indexSkill < Spell_SpecialCaster.Count)
+                        skillToUse = Spell_SpecialCaster[indexSkill];
+                    break;
+
+                default:
+                    return;
             }
+
+            skillToUse?.Cast(this);
         }
 
         public void UseSkillByName(string name)
         {
-            
+            Skill skill = null;
+
+            // Recherche dans tous les groupes
+            skill = Spell_FillCaster?.Find(s => s.Name == name)
+                ?? Spell_HalfCaster?.Find(s => s.Name == name)
+                ?? Spell_SpecialCaster?.Find(s => s.Name == name)
+                ?? Skill_InFignter?.Find(s => s.Name == name);
+
+            skill?.Cast(this);
         }
     }
 }

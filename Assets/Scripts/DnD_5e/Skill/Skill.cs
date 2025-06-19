@@ -80,8 +80,10 @@ namespace DnD.DnD_5e
             this.SauvegardeRoll = SauvegardeRoll;
         }
 
-        public override void Cast()
+        public override void Cast(Entity Caster)
         {
+            base.Cast(Caster);
+
             var targets = SelectEntityHit();
 
             List<DamageComponent> damages = this.Damages;
@@ -97,10 +99,8 @@ namespace DnD.DnD_5e
             }
 
             ApplyToTarget(targets, damages);
-            
-            base.Cast();
         }
-        
+
         public void ApplyToTarget(List<Entity> targets, List<DamageComponent> damages)
         {
             if (targets == null || targets.Count == 0)
