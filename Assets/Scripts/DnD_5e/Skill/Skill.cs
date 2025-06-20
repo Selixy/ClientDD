@@ -80,8 +80,10 @@ namespace DnD.DnD_5e
             this.SauvegardeRoll = SauvegardeRoll;
         }
 
-        public override void Cast()
+        public override void Cast(Entity Caster)
         {
+            base.Cast(Caster);
+
             var targets = SelectEntityHit();
 
             List<DamageComponent> damages = this.Damages;
@@ -97,8 +99,6 @@ namespace DnD.DnD_5e
             }
 
             ApplyToTarget(targets, damages);
-            
-            base.Cast();
         }
 
         public void ApplyToTarget(List<Entity> targets, List<DamageComponent> damages)
@@ -106,44 +106,56 @@ namespace DnD.DnD_5e
             if (targets == null || targets.Count == 0)
                 return;
 
-            // Vérifie que le lanceur est bien une entité DnD_5e
             if (this.Caster is not Entity_DnD_5e casterDnD)
                 return;
 
-            // Calcule les dégâts une fois
             Damage damage = casterDnD.DamageRoll(damages);
 
-            foreach (var target in targets)
+            // Filtres et conversion
+            var targetDnDList = targets
+                .OfType<Entity_DnD_5e>()
+                .ToList();
+
+            if (this.SauvegardeRoll != DnDRollType.None)
             {
-                // Vérifie que le cyble est bien une entité DnD_5e
-                if (target is not Entity_DnD_5e targetDnD)
-                    continue; 
-                
-                // États par défaut
-                var r_etat = this.Etats;
-                var r_damage = damage;
-
-                int dc = this.DC ?? 0;
-
-                if (this.SauvegardeRoll != DnDRollType.None)
+                var multiJDS = new MultiJDSRequest(targetDnDList, this.SauvegardeRoll, ContextRoll.SauvegardeRoll);
+                multiJDS.OnResolved += (results) =>
                 {
-                    var result = ((Entity_DnD_5e)target).RequestJDS(this.SauvegardeRoll, ContextRoll.SauvegardeRoll);
-
-                    if (result.total >= dc) // Le jet de sauvegarde a réussi
+                    foreach (var target in targetDnDList)
                     {
-                        r_etat = this.EtatsJDS;
+                        int dc = this.DC ?? 0;
+                        int result = results[target];
 
-                        switch (this.DamagesJDS)
+                        var r_etat = this.Etats;
+                        var r_damage = damage;
+
+                        if (result >= dc)
                         {
-                            default: break;                            // dégâts normaux
-                            case 1: r_damage = damage / 2; break;      // moitié des dégâts
-                            case 2: r_damage = new Damage(); break;    // pas de dégâts
-                        }
-                    }
-                }
+                            r_etat = this.EtatsJDS;
 
-                ApplyDamage(target, r_damage);
-                ApplayEtats(target, r_etat);
+                            switch (this.DamagesJDS)
+                            {
+                                default: break;
+                                case 1: r_damage = damage / 2; break;
+                                case 2: r_damage = new Damage(); break;
+                            }
+                        }
+
+                        ApplyDamage(target, r_damage);
+                        ApplayEtats(target, r_etat);
+                    }
+                };
+
+                RequestSystem.Enqueue(multiJDS);
+            }
+            else
+            {
+                // Pas de JDS → application immédiate
+                foreach (var target in targetDnDList)
+                {
+                    ApplyDamage(target, damage);
+                    ApplayEtats(target, this.Etats);
+                }
             }
         }
 

@@ -14,7 +14,7 @@ public class Etat
     public EtatType  Type        { get; protected set; }
     public int       Duree       { get; protected set; } // Nombre de tours, -1 = permanent
     public bool      EstVisible  { get; protected set; } = true;
-    public Entity   Owner       { get; protected set; } 
+    public Entity    Owner       { get; protected set; } 
 
 
     public Etat(string nom

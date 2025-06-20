@@ -79,6 +79,8 @@ namespace DnD.DnD_5e
         SleightOfHand,
         Stealth,
         Survival,
+
+        Initiative,
     }
 
     public enum ContextRoll
@@ -88,6 +90,7 @@ namespace DnD.DnD_5e
         DamageRoll,
         SauvegardeRoll,
         AbilityRoll,
+        initiativeRoll,
     }
 
     public struct SkillData
@@ -104,19 +107,32 @@ namespace DnD.DnD_5e
 
     public class Entity_DnD_5e : Entity
     {
-        public string               Race           { get; protected set; }
-        public List<Class_DnD_5e>   Classes        { get; protected set; }
-        public State                Stats          { get; protected set; }
-        public int                  AC             { get; protected set; }
-        public int                  CritBonus      { get; protected set; }
-        public State                Modifiers      { get; protected set; }
-        public int                  Maitrise       { get; protected set; }
+        public string               Race              { get; protected set; }
+        public List<Class_DnD_5e>   Classes           { get; protected set; }
+        public State                Stats             { get; protected set; }
+        public int                  AC                { get; protected set; }
+        public int                  CritBonus         { get; protected set; }
+        public State                Modifiers         { get; protected set; }
+        public int                  Maitrise          { get; protected set; }
+        public int                  Initiative        { get; protected set; }
+        public int                  WalkSpeed         { get; protected set; }
+        public int                  ExtraAtaque       { get; protected set; }
+        public int                  ExtraAction       { get; protected set; }
+        public float                SpeedFactor       { get; protected set; }
+        public int[]                SpellEmplasement  { get; protected set; }
+        public int[]                SpecialRessources { get; protected set; }
 
         public Dictionary<DnDRollType, SkillData> SkillMastery  { get; protected set; }
         public Dictionary<DamageType, int?> DamageResistance    { get; protected set; }
 
-        public ActivContext      fightContext   { get; set; }
-        public List<State>           Debuffs    { get; protected set; } = new List<State>();
+        public ActivContext      fightContext    { get; set; }
+        public List<State>            Debuffs    { get; protected set; } = new List<State>();
+        public int[]                  Actions    { get; protected set; } = new int[5] {30, 1, 1, 1, 0};  // {Deplacement, Action, BonusAction, Reaction, ExtraAtaque}
+
+        public List<Skill>   Spell_FillCaster    { get; protected set; }
+        public List<Skill>   Spell_HalfCaster    { get; protected set; }
+        public List<Skill>   Spell_SpecialCaster { get; protected set; }
+        public List<Skill>   Skill_InFignter     { get; protected set; }
 
 
         public Entity_DnD_5e(string             name       = "[Unknown Entity]"
@@ -129,11 +145,12 @@ namespace DnD.DnD_5e
                             ,int?               maitrise   = null
                             ,State?             stats      = null
                             ,int                AC         = 10
+                            ,int                WalkSpeed  = 30
                             ,int                CritBonus  = 0
                             ,State?             modifiers  = null
                             ,Dictionary<DnDRollType, SkillData> skillMastery = null
-                            ,Dictionary<DamageType, int?> DamageResistance   = null
-                            ,Inventaire_DnD_5e Inventaire                    = null
+                            ,Dictionary<DamageType, int?>   DamageResistance = null
+                            ,Inventaire_DnD_5e              Inventaire       = null
                             )
                             : base(name
                                   ,lvl
@@ -147,6 +164,7 @@ namespace DnD.DnD_5e
             this.Classes          = classes;
             this.Stats            = stats            ?? new State(10, 10, 10, 10, 10, 10);
             this.AC               = AC;
+            this.WalkSpeed        = WalkSpeed;
             this.CritBonus        = CritBonus;
             this.Modifiers        = modifiers        ?? Stats.mod;
             this.Maitrise         = maitrise         ?? GetProficiencyBonus(base.Lvl);
@@ -252,6 +270,8 @@ namespace DnD.DnD_5e
                 DnDRollType.Performance      => Modifiers.Cha,
                 DnDRollType.Persuasion       => Modifiers.Cha,
 
+                DnDRollType.Initiative       => Modifiers.Dex,
+
                 _ => 0
             };
 
@@ -270,7 +290,45 @@ namespace DnD.DnD_5e
         {
             return this.Roll(rollType, Context: Context);
         }
-        
+
+        public virtual int RequestInitiativeRoll()
+        {
+
+            this.Initiative = this.Roll(DnDRollType.Initiative, Context: ContextRoll.initiativeRoll).total;
+            return Initiative;
+        }
+
+        public virtual void StartTurn()
+        {
+            this.Actions = new int[5]
+            {
+                (int)(this.WalkSpeed * this.SpeedFactor), // Déplacement disponible ce tour
+                1 + this.ExtraAction,                     // Actions principales (ex : Haste = +1 action)
+                1,                                        // Bonus action (disponible par défaut)
+                1,                                        // Réaction (disponible au départ)
+                this.ExtraAtaque                          // Attaques supplémentaires (ex : extra attacks)
+            };
+
+            this.fightContext = ActivContext.Action | ActivContext.bonusAction | ActivContext.Reaction;
+
+            foreach (var etat in this.Etats)
+            {
+                etat.OnTurnStart(this);
+            }
+        }
+
+        public virtual void EndTurn()
+        {
+            foreach (int i in new[] { 0, 1, 2, 4 })
+                this.Actions[i] = 0;
+
+            this.fightContext &= ~(ActivContext.Action | ActivContext.bonusAction);
+
+            foreach (var etat in this.Etats)
+            {
+                etat.OnTurnEnd(this);
+            }
+        }
         
         public Damage DamageRoll(List<DamageComponent> diceList, bool isMagical = false)
         {
@@ -345,6 +403,52 @@ namespace DnD.DnD_5e
             base.HpMax += hpAddMax;
             base.Heal(hpAddMax);
             base.Lvl_Up();
+        }
+
+        public void UseSkillByIndex(int indexType, int indexSkill)
+        {
+            Skill skillToUse = null;
+
+            switch (indexType)
+            {
+                case 0: // Full Caster Spell
+                    if (indexSkill >= 0 && indexSkill < Spell_FillCaster.Count)
+                        skillToUse = Spell_FillCaster[indexSkill];
+                    break;
+
+                case 1: // In-Fighter Skill
+                    if (indexSkill >= 0 && indexSkill < Skill_InFignter.Count)
+                        skillToUse = Skill_InFignter[indexSkill];
+                    break;
+
+                case 2: // Half Caster Spell
+                    if (indexSkill >= 0 && indexSkill < Spell_HalfCaster.Count)
+                        skillToUse = Spell_HalfCaster[indexSkill];
+                    break;
+
+                case 3: // Special Casting
+                    if (indexSkill >= 0 && indexSkill < Spell_SpecialCaster.Count)
+                        skillToUse = Spell_SpecialCaster[indexSkill];
+                    break;
+
+                default:
+                    return;
+            }
+
+            skillToUse?.Cast(this);
+        }
+
+        public void UseSkillByName(string name)
+        {
+            Skill skill = null;
+
+            // Recherche dans tous les groupes
+            skill = Spell_FillCaster?.Find(s => s.Name == name)
+                ?? Spell_HalfCaster?.Find(s => s.Name == name)
+                ?? Spell_SpecialCaster?.Find(s => s.Name == name)
+                ?? Skill_InFignter?.Find(s => s.Name == name);
+
+            skill?.Cast(this);
         }
     }
 }

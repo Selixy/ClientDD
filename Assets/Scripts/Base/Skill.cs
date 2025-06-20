@@ -38,7 +38,11 @@ public class Skill
         }
     }
 
-    public    virtual void Cast()                  { }
+    public    virtual void Cast( Entity Caster)
+    {
+        this.Caster = Caster;
+    }
+    
     public    virtual void DeactivSkil()           { }
     protected virtual void OnSkillUnavailable()    { }
     protected virtual void OnSkillAvailable()      { }
