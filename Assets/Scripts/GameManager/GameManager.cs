@@ -6,8 +6,7 @@ using DnD.DnD_5e;
 
 public partial class GameManager : MonoBehaviour
 {
-    // Liste de joueurs
-    public List<Player_DnD_5e> players = new List<Player_DnD_5e>();
+    
 }
 
 public static class EntityRegistry
