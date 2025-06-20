@@ -33,10 +33,10 @@ namespace DnD.DnD_5e
 
 
         // ──────────────── Sorts et compétences ────────────────
-        public List<Skill>          Spell_FillCaster     { get; protected set; }
-        public List<Skill>          Spell_HalfCaster     { get; protected set; }
+        public List<Skill>          Spell_Caster         { get; protected set; }
         public List<Skill>          Spell_SpecialCaster  { get; protected set; }
         public List<Skill>          Skill_InFignter      { get; protected set; }
+        public List<Skill>          Special_Ability      { get; protected set; }
 
 
         // ──────────────── Ressources magiques ────────────────
@@ -54,6 +54,7 @@ namespace DnD.DnD_5e
         // ──────────────── État de combat ────────────────
         public ActivContext         fightContext      { get; set; }
         public List<State>          Debuffs           { get; protected set; } = new List<State>();
+
 
 
         // ──────────────── Constructeur ────────────────

@@ -45,8 +45,8 @@ namespace DnD.DnD_5e
             switch (indexType)
             {
                 case 0: // Full Caster Spell
-                    if (indexSkill >= 0 && indexSkill < Spell_FillCaster.Count)
-                        skillToUse = Spell_FillCaster[indexSkill];
+                    if (indexSkill >= 0 && indexSkill < Spell_Caster.Count)
+                        skillToUse = Spell_Caster[indexSkill];
                     break;
 
                 case 1: // In-Fighter Skill
@@ -54,12 +54,12 @@ namespace DnD.DnD_5e
                         skillToUse = Skill_InFignter[indexSkill];
                     break;
 
-                case 2: // Half Caster Spell
-                    if (indexSkill >= 0 && indexSkill < Spell_HalfCaster.Count)
-                        skillToUse = Spell_HalfCaster[indexSkill];
+                case 2: // Special Caster Spell
+                    if (indexSkill >= 0 && indexSkill < Special_Ability.Count)
+                        skillToUse = Special_Ability[indexSkill];
                     break;
 
-                case 3: // Special Casting
+                case 3: // Special Ability
                     if (indexSkill >= 0 && indexSkill < Spell_SpecialCaster.Count)
                         skillToUse = Spell_SpecialCaster[indexSkill];
                     break;
@@ -76,8 +76,8 @@ namespace DnD.DnD_5e
             Skill skill = null;
 
             // Recherche dans tous les groupes
-            skill = Spell_FillCaster?.Find(s => s.Name == name)
-                ?? Spell_HalfCaster?.Find(s => s.Name == name)
+            skill = Spell_Caster?.Find(s => s.Name == name)
+                ?? Special_Ability?.Find(s => s.Name == name)
                 ?? Spell_SpecialCaster?.Find(s => s.Name == name)
                 ?? Skill_InFignter?.Find(s => s.Name == name);
 
