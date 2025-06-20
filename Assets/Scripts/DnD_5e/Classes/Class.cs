@@ -7,6 +7,7 @@ namespace DnD.DnD_5e
         None,
         FullCaster,
         HalfCaster,
+        ThirdCaster,
         Special,
         Martial,
     }

@@ -8,40 +8,42 @@ namespace DnD.DnD_5e
     public partial class Entity_DnD_5e : Entity
     {
         // ──────────────── Identité de base ────────────────
-        public string               Race                { get; protected set; }
-        public List<Class_DnD_5e>   Classes             { get; protected set; }
+        public string               Race                 { get; protected set; }
+        public List<Class_DnD_5e>   Classes              { get; protected set; }
 
 
         // ──────────────── Caractéristiques ────────────────
-        public State                Stats               { get; protected set; }
-        public State                Modifiers           { get; protected set; }
-        public int                  Maitrise            { get; protected set; }
+        public State                Stats                { get; protected set; }
+        public State                Modifiers            { get; protected set; }
+        public int                  Maitrise             { get; protected set; }
 
 
         // ──────────────── Défense / Combat ────────────────
-        public int                  AC                  { get; protected set; }
-        public int                  CritBonus           { get; protected set; }
-        public int                  Initiative          { get; protected set; }
+        public int                  AC                   { get; protected set; }
+        public int                  CritBonus            { get; protected set; }
+        public int                  Initiative           { get; protected set; }
 
 
         // ──────────────── Mouvement et actions ────────────────
-        public int                  WalkSpeed           { get; protected set; }
-        public float                SpeedFactor         { get; protected set; }
-        public int                  ExtraAtaque         { get; protected set; }
-        public int                  ExtraAction         { get; protected set; }
-        public int[]                Actions             { get; protected set; } = new int[5] {30, 1, 1, 1, 0};
+        public int                  WalkSpeed            { get; protected set; }
+        public float                SpeedFactor          { get; protected set; }
+        public int                  ExtraAtaque          { get; protected set; }
+        public int                  ExtraAction          { get; protected set; }
+        public int[]                Actions              { get; protected set; } = new int[5] {30, 1, 1, 1, 0};
 
 
         // ──────────────── Sorts et compétences ────────────────
-        public List<Skill>          Spell_FillCaster    { get; protected set; }
-        public List<Skill>          Spell_HalfCaster    { get; protected set; }
-        public List<Skill>          Spell_SpecialCaster { get; protected set; }
-        public List<Skill>          Skill_InFignter     { get; protected set; }
+        public List<Skill>          Spell_FillCaster     { get; protected set; }
+        public List<Skill>          Spell_HalfCaster     { get; protected set; }
+        public List<Skill>          Spell_SpecialCaster  { get; protected set; }
+        public List<Skill>          Skill_InFignter      { get; protected set; }
 
 
         // ──────────────── Ressources magiques ────────────────
-        public int[]                SpellEmplasement    { get; protected set; }
-        public int[]                SpecialRessources   { get; protected set; }
+        public int[]                SpellEmplasement     { get; protected set; }
+        public int[]                SpellEmplasementMax  { get; protected set; }
+        public int[]                SpecialRessources    { get; protected set; }
+        public int[]                SpecialRessourcesMax { get; protected set; }
 
 
         // ──────────────── Système de compétences et résistance ────────────────
@@ -131,6 +133,52 @@ namespace DnD.DnD_5e
             if (level >=  9) return 4;
             if (level >=  5) return 3;
             return 2;
+        }
+
+        public int[] GetSpellEmplasementMax()
+        {
+            int fullCasterLevel  = 0;
+            int halfCasterLevel  = 0;
+            int thirdCasterLevel = 0;
+
+            // Calcule les niveaux de lanceur par archétype
+            foreach (var c in this.Classes)
+            {
+                switch (c.Archetype)
+                {
+                    case ClassArchetype.FullCaster:
+                        fullCasterLevel += c.Lvl;
+                        break;
+
+                    case ClassArchetype.HalfCaster:
+                        halfCasterLevel += c.Lvl;
+                        break;
+
+                    case ClassArchetype.ThirdCaster:
+                        thirdCasterLevel += c.Lvl;
+                        break;
+
+                    // Martial ou Special ne comptent pas
+                }
+            }
+
+            // Convertit en niveau de lanceur total selon les règles officielles
+            int totalCasterLevel =
+                fullCasterLevel
+                + (int)Math.Floor(halfCasterLevel  / 2.0)
+                + (int)Math.Floor(thirdCasterLevel / 3.0);
+
+            totalCasterLevel = Math.Clamp(totalCasterLevel, 0, 20);
+
+            // Utilise le tableau pour déterminer les emplacements globaux
+            var spellSlots = CasterInfo.CasterSlots[totalCasterLevel];
+
+            // Copie le tableau
+            int[] result = new int[9];
+            for (int i = 0; i < 9; i++)
+                result[i] = spellSlots?[i] ?? 0;
+
+            return result;
         }
 
 
