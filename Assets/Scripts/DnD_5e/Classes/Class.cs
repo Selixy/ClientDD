@@ -19,7 +19,7 @@ namespace DnD.DnD_5e
         // ──────────────── Competances et magie ────────────────
         public SpellcastingStyle SpellcastingStyle         { get; protected set; }
         public int[]             NbSpell                   { get; protected set; }          // [cantrips, spells]
-        public List<Spell>       Spell                     { get; protected set; }
+        public List<Skill>       Spell                     { get; protected set; }
         public List<Skill>       Skill                     { get; protected set; }
         public int[][]           SpecialCasterProgression  { get; protected set; }
         public StateEnum         CastingStat               { get; protected set; }
@@ -41,7 +41,7 @@ namespace DnD.DnD_5e
                            ,int               HitDie                    = 8
                            ,List<int>         Choix                     = null
                            ,int[]             NbSpell                   = null
-                           ,List<Spell>       Spell                     = null
+                           ,List<Skill>       Spell                     = null
                            ,List<Skill>       Skill                     = null
                            ,SpellcastingStyle SpellcastingStyle         = SpellcastingStyle.None
                            ,ClassArchetype    Archetype                 = ClassArchetype.None
@@ -76,13 +76,13 @@ namespace DnD.DnD_5e
             this.Lvl++;
         }
 
-        public void TogelPreparedSpellByName(string SpellName)
+        public void TogglePreparedSpellByName(string SpellName)
         {
             if (SpellcastingStyle != SpellcastingStyle.Prepared
             && SpellcastingStyle != SpellcastingStyle.Grimoire)
                 return;
 
-            Spell spellToToggle = this.Spell?.Find(s => s.Name == SpellName);
+            Skill spellToToggle = this.Spell?.Find(s => s.Name == SpellName);
             if (spellToToggle == null)
                 return;
 

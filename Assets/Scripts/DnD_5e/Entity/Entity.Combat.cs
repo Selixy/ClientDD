@@ -17,7 +17,7 @@ namespace DnD.DnD_5e
                 this.ExtraAtaque                          // Attaques supplémentaires (ex : extra attacks)
             };
 
-            this.fightContext = ActivContext.Action | ActivContext.bonusAction | ActivContext.Reaction;
+            this.fightContext = ActivContext.Action | ActivContext.BonusAction | ActivContext.Reaction;
 
             foreach (var etat in this.Etats)
             {
@@ -30,7 +30,7 @@ namespace DnD.DnD_5e
             foreach (int i in new[] { 0, 1, 2, 4 })
                 this.Actions[i] = 0;
 
-            this.fightContext &= ~(ActivContext.Action | ActivContext.bonusAction);
+            this.fightContext &= ~(ActivContext.Action | ActivContext.BonusAction);
 
             foreach (var etat in this.Etats)
             {
