@@ -19,8 +19,9 @@ namespace DnD.DnD_5e
         // ──────────────── Competances et magie ────────────────
         public SpellcastingStyle SpellcastingStyle         { get; protected set; }
         public int[]             NbSpell                   { get; protected set; }          // [cantrips, spells]
-        public List<Skill>       Spell                     { get; protected set; }
         public List<Skill>       Skill                     { get; protected set; }
+        public List<Skill>       Spell                     { get; protected set; }
+        public List<Skill>       PreparedSpells            { get; protected set; }
         public int[][]           SpecialCasterProgression  { get; protected set; }
         public StateEnum         CastingStat               { get; protected set; }
 
@@ -65,6 +66,51 @@ namespace DnD.DnD_5e
             this.CastingStat              = CastingStat;
         }
 
+        public void AssigneSpellsToEntity()
+        {
+            var owner = this.SelfEntity;
+
+            foreach (var skill in this.Skill)
+            {
+                    owner.Add_SpecialAbility(skill);
+            }
+
+            bool NendPrepaed = (this.SpellcastingStyle == SpellcastingStyle.Prepared
+                            || this.SpellcastingStyle == SpellcastingStyle.Grimoire);
+
+            foreach (var spell in this.Spell)
+            {
+                if (this.PreparedSpells.Contains(spell) || !NendPrepaed)
+                {
+                    if (this.Archetype == ClassArchetype.SpecialCaster)
+                    {
+                        owner.Add_SpellSpecialCaster(spell);
+                        if (NendPrepaed)
+                            owner.Remove_UnpreparedSpellSpecialCaster(spell);
+                    }
+                    else
+                    {
+                        owner.Add_SpellCaster(spell);
+                        if (NendPrepaed)
+                            owner.Remove_UnpreparedSpellCaster(spell);
+                    }
+                } 
+                else if (NendPrepaed)
+                {
+                    if (this.Archetype == ClassArchetype.SpecialCaster)
+                    {
+                        owner.Add_UnpreparedSpellSpecialCaster(spell);
+                        owner.Remove_SpellSpecialCaster(spell);
+                    }
+                    else
+                    {
+                        owner.Add_UnpreparedSpellCaster(spell);
+                        owner.Remove_SpellCaster(spell);
+                    }
+                }
+            }             
+        }
+
 
 
         // ──────────────── Méthodes ────────────────
@@ -76,29 +122,31 @@ namespace DnD.DnD_5e
             this.Lvl++;
         }
 
-        public void TogglePreparedSpellByName(string SpellName)
+        public void TogglePreparedSpellByName(string spellName)
         {
+            // Vérifie que le style de lancement le permet
             if (SpellcastingStyle != SpellcastingStyle.Prepared
             && SpellcastingStyle != SpellcastingStyle.Grimoire)
                 return;
 
-            Skill spellToToggle = this.Spell?.Find(s => s.Name == SpellName);
+            // Recherche du sort connu par cette classe
+            Skill spellToToggle = this.Spell?.Find(s => s.Name == spellName);
             if (spellToToggle == null)
                 return;
 
-            List<Skill> preparedList = Archetype switch
+            // Initialisation défensive
+            if (PreparedSpells == null)
+                PreparedSpells = new List<Skill>();
+
+            // Ajout ou retrait du sort
+            if (PreparedSpells.Contains(spellToToggle))
             {
-                ClassArchetype.SpecialCaster => this.SelfEntity?.Spell_SpecialCaster,
-                _                            => this.SelfEntity?.Spell_Caster
-            };
-
-            if (preparedList == null)
-                return;
-
-            if (preparedList.Contains(spellToToggle))
-                preparedList.Remove(spellToToggle);
-            else if (preparedList.Count < this.GetMaxPreparedSpell)
-                preparedList.Add(spellToToggle);
+                PreparedSpells.Remove(spellToToggle);
+            }
+            else if (PreparedSpells.Count < this.GetMaxPreparedSpell)
+            {
+                PreparedSpells.Add(spellToToggle);
+            }
         }
 
         public int GetMaxPreparedSpell

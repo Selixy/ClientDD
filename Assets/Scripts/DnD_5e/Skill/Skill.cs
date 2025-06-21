@@ -80,7 +80,6 @@ namespace DnD.DnD_5e
             var targets = SelectEntityHit();
             var damages = this.Damages;
 
-            // Consommation effective si tout est valide
             ((Entity_DnD_5e)base.Caster).ConsumeResources(this.Ressources);
 
             if ((AttackRoll & StateEnum.None) == 0)

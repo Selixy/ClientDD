@@ -33,10 +33,12 @@ namespace DnD.DnD_5e
 
 
         // ──────────────── Sorts et compétences ────────────────
-        public List<Skill>          Spell_Caster         { get; protected set; }
-        public List<Skill>          Spell_SpecialCaster  { get; protected set; }
-        public List<Skill>          Skill_InFignter      { get; protected set; }
-        public List<Skill>          Special_Ability      { get; protected set; }
+        public List<Skill>   Spell_Caster                  { get; protected set; }
+        public List<Skill>   UnpreparedSpell_Caster        { get; protected set; }
+        public List<Skill>   UnpreparedSpell_SpecialCaster { get; protected set; }
+        public List<Skill>   Spell_SpecialCaster           { get; protected set; }
+        public List<Skill>   Skill_InFignter               { get; protected set; }
+        public List<Skill>   Special_Ability               { get; protected set; }
 
 
         // ──────────────── Ressources ────────────────
@@ -74,12 +76,12 @@ namespace DnD.DnD_5e
                             ,Inventaire_DnD_5e                  Inventaire       = null
                             )
                             : base(name
-                                ,lvl
-                                ,exp
-                                ,hpMax
-                                ,curHp      ?? hpMax
-                                ,Inventaire ?? new Inventaire_DnD_5e()
-                                )
+                                  ,lvl
+                                  ,exp
+                                  ,hpMax
+                                  ,curHp      ?? hpMax
+                                  ,Inventaire ?? new Inventaire_DnD_5e()
+                                  )
         {
             this.Race             = race;
             this.Classes          = classes;
@@ -173,6 +175,78 @@ namespace DnD.DnD_5e
             // Met à jour RessourcesMax
             RessourcesMax["SpellSlots"] = result;
             return result;
+        }
+
+        public void Add_SpecialAbility(Skill s)
+        {
+            if(!(this.Special_Ability.Contains(s)))
+                this.Special_Ability.Add(s);
+        }
+
+        public void Add_SpellCaster(Skill s)
+        {
+            if(!(this.Spell_Caster.Contains(s)))
+                this.Spell_Caster.Add(s);
+        }
+
+        public void Add_UnpreparedSpellCaster(Skill s)
+        {
+            if(!(this.UnpreparedSpell_Caster.Contains(s)))
+                this.UnpreparedSpell_Caster.Add(s);
+        }
+
+        public void Add_UnpreparedSpellSpecialCaster(Skill s)
+        {
+            if(!(this.UnpreparedSpell_SpecialCaster.Contains(s)))
+                this.UnpreparedSpell_SpecialCaster.Add(s);
+        }
+
+        public void Add_SpellSpecialCaster(Skill s)
+        {
+            if(!(this.Spell_SpecialCaster.Contains(s)))
+                this.Spell_SpecialCaster.Add(s);
+        }
+
+        public void Add_SkillInFignter(Skill s)
+        {
+            if(!(this.Skill_InFignter.Contains(s)))
+                this.Skill_InFignter.Add(s);
+        }
+        
+        public void Remove_SpecialAbility(Skill s)
+        {
+            if(this.Special_Ability.Contains(s))
+                this.Special_Ability.Remove(s);
+        }
+
+        public void Remove_SpellCaster(Skill s)
+        {
+            if(this.Spell_Caster.Contains(s))
+                this.Spell_Caster.Remove(s);
+        }
+
+        public void Remove_UnpreparedSpellCaster(Skill s)
+        {
+            if(this.UnpreparedSpell_Caster.Contains(s))
+                this.UnpreparedSpell_Caster.Remove(s);
+        }
+
+        public void Remove_UnpreparedSpellSpecialCaster(Skill s)
+        {
+            if(this.UnpreparedSpell_SpecialCaster.Contains(s))
+                this.UnpreparedSpell_SpecialCaster.Remove(s);
+        }
+
+        public void Remove_SpellSpecialCaster(Skill s)
+        {
+            if(this.Spell_SpecialCaster.Contains(s))
+                this.Spell_SpecialCaster.Remove(s);
+        }
+
+        public void Remove_SkillInFignter(Skill s)
+        {
+            if(this.Skill_InFignter.Contains(s))
+                this.Skill_InFignter.Remove(s);
         }
 
 
