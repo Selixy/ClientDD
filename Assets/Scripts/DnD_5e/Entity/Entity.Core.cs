@@ -40,10 +40,10 @@ namespace DnD.DnD_5e
 
 
         // ──────────────── Ressources magiques ────────────────
-        public int[]                SpellEmplasement     { get; protected set; }
-        public int[]                SpellEmplasementMax  { get; protected set; }
-        public int[]                SpecialRessources    { get; protected set; }
-        public int[]                SpecialRessourcesMax { get; protected set; }
+        public int[]                   SpellEmplasementMax  { get; protected set; }
+        public int[]                   SpellEmplasement     { get; protected set; }
+        public Dictionary<string, int> SpecialRessources    { get; protected set; }
+        public Dictionary<string, int> SpecialRessourcesMax { get; protected set; }
 
 
         // ──────────────── Système de compétences et résistance ────────────────
@@ -236,6 +236,36 @@ namespace DnD.DnD_5e
             }
 
             base.TakeDamage(total);
+        }
+
+        public void ConsumeResources(Dictionary<string, int> specialCosts = null, int[] spellSlotCosts = null)
+        {
+            // Décrémenter les ressources spéciales dynamiques (ex: Qi, Sorcelerie)
+            if (specialCosts != null)
+            {
+                foreach (var pair in specialCosts)
+                {
+                    if (SpecialRessources.ContainsKey(pair.Key))
+                    {
+                        SpecialRessources[pair.Key] = Math.Max(0, SpecialRessources[pair.Key] - pair.Value);
+                    }
+                }
+            }
+
+            // Décrémenter les emplacements de sorts (niveau 1 à 9)
+            if (spellSlotCosts != null)
+            {
+                for (int i = 0; i < spellSlotCosts.Length; i++)
+                {
+                    int cost = spellSlotCosts[i];
+                    if (cost <= 0) continue;
+
+                    if (i < SpellEmplasement.Length)
+                    {
+                        SpellEmplasement[i] = Math.Max(0, SpellEmplasement[i] - cost);
+                    }
+                }
+            }
         }
     }
 }

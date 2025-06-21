@@ -4,15 +4,6 @@ using System.Linq;
 
 namespace DnD.DnD_5e
 {
-    [System.Flags]
-    public enum ActivContext
-    {
-        NoFight     = 1 << 0,
-        Action      = 1 << 1,
-        BonusAction = 1 << 2,
-        Reaction    = 1 << 3
-    }
-
     public class Skill_DnD_5e : Skill
     {
         // ──────────────── Contexte et type ────────────────
@@ -37,35 +28,49 @@ namespace DnD.DnD_5e
         public List<DamageComponent> Damages        { get; protected set; }
         public int                   DamagesJDS     { get; protected set; }
 
+
+        // ──────────────── Ressources ────────────────
+        public int[]                   SpellEmplasement  { get; protected set; }
+        public Dictionary<string, int> SpecialResources  { get; protected set; }
+
+
+
         // ──────────────── Constructeur ────────────────
-        public Skill_DnD_5e(int                   IndexUser,
-                            string                Name          = "[Unknown Skill_DnD_5e]",
-                            ActivContext          Context       = ActivContext.NoFight,
-                            int                   Targetable    = 0,
-                            int                   Range         = 5,
-                            int                   Radius        = 0,
-                            int?                  DC            = null,
-                            List<DamageComponent> Damages       = null,
-                            int                   DamagesJDS    = 1,
-                            List<Etat_DnD_5e>     Etats         = null,
-                            List<Etat_DnD_5e>     EtatsJDS      = null,
-                            SkillType             SkillType     = SkillType.Utility,
-                            StateEnum             AttackRoll    = StateEnum.None,
-                            DnDRollType           SauvgardeRoll = DnDRollType.None)
-            : base(IndexUser, Name)
+        public Skill_DnD_5e(int                     IndexUser
+                           ,string                  Name             = "[Unknown Skill_DnD_5e]"
+                           ,ActivContext            Context          = ActivContext.NoFight
+                           ,int                     Targetable       = 0
+                           ,int                     Range            = 5
+                           ,int                     Radius           = 0
+                           ,int?                    DC               = null
+                           ,List<DamageComponent>   Damages          = null
+                           ,int                     DamagesJDS       = 1
+                           ,List<Etat_DnD_5e>       Etats            = null
+                           ,List<Etat_DnD_5e>       EtatsJDS         = null
+                           ,SkillType               SkillType        = SkillType.Utility
+                           ,StateEnum               AttackRoll       = StateEnum.None
+                           ,DnDRollType             SauvgardeRoll    = DnDRollType.None
+                           ,Dictionary<string, int> SpecialResources = null
+                           ,int[]                   SpellEmplasement = null
+                           )
+                           : base(IndexUser
+                                 ,Name
+                                 )
         {
-            this.Context        = Context;
-            this.Targetable     = Targetable;
-            this.Range          = Range;
-            this.Radius         = Radius;
-            this.DC             = DC;
-            this.Damages        = Damages;
-            this.DamagesJDS     = DamagesJDS;
-            this.Etats          = Etats;
-            this.EtatsJDS       = EtatsJDS;
-            this.SkillType      = SkillType;
-            this.AttackRoll     = AttackRoll;
-            this.SauvegardeRoll = SauvgardeRoll;
+            this.Context          = Context;
+            this.Targetable       = Targetable;
+            this.Range            = Range;
+            this.Radius           = Radius;
+            this.DC               = DC;
+            this.Damages          = Damages;
+            this.DamagesJDS       = DamagesJDS;
+            this.Etats            = Etats;
+            this.EtatsJDS         = EtatsJDS;
+            this.SkillType        = SkillType;
+            this.AttackRoll       = AttackRoll;
+            this.SauvegardeRoll   = SauvgardeRoll;
+            this.SpecialResources = SpecialResources;
+            this.SpellEmplasement = SpellEmplasement;
         }
 
         // ──────────────── Cast principal ────────────────
@@ -73,8 +78,13 @@ namespace DnD.DnD_5e
         {
             base.Cast(Caster);
 
+            if (!ChecksResource()) return;
+
             var targets = SelectEntityHit();
             var damages = this.Damages;
+
+            // Consommation effective si tout est valide
+            ((Entity_DnD_5e)base.Caster).ConsumeResources(SpecialResources, SpellEmplasement);
 
             if ((AttackRoll & StateEnum.None) == 0)
             {
@@ -227,6 +237,37 @@ namespace DnD.DnD_5e
                 }
             }
             return hits;
+        }
+
+        private bool ChecksResource()
+        {
+            var caster = (Entity_DnD_5e)base.Caster;
+
+            // Vérifie les ressources spéciales
+            if (SpecialResources != null)
+            {
+                foreach (var (resName, requiredAmount) in SpecialResources)
+                {
+                    if (!caster.SpecialRessources.TryGetValue(resName, out int available) || available < requiredAmount)
+                        return false;
+                }
+            }
+
+            // Vérifie les emplacements de sort
+            if (SpellEmplasement != null)
+            {
+                for (int i = 0; i < SpellEmplasement.Length; i++)
+                {
+                    int required = SpellEmplasement[i];
+                    if (required <= 0) continue;
+
+                    if (i >= caster.SpellEmplasement.Length || caster.SpellEmplasement[i] < required)
+                        return false;
+                }
+            }
+
+            // Si tout est suffisant
+            return true;
         }
 
         public override void Update()
