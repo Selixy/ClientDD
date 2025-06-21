@@ -17,7 +17,7 @@ namespace DnD.DnD_5e
 
         public override void Execute()
         {
-            var (total, _) = Target.RequestJDS(StatType, Context);
+            var (total, _) = Target.RollJDS(StatType, Context);
             Resolve(total);
         }
     }

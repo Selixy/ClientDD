@@ -14,7 +14,7 @@ namespace DnD.DnD_5e
 
         public override void Execute()
         {
-            int Initiative = Target.RequestInitiativeRoll();
+            int Initiative = Target.RollInitiative();
             Resolve(Initiative);
         }
     }

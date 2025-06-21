@@ -2,7 +2,6 @@ using System.Collections.Generic;
 
 namespace DnD.DnD_5e
 {
-    
     public struct Damage
     {
         public bool Magique; // L'attaque est-elle magique ? (qualificatif général)
@@ -97,6 +96,4 @@ namespace DnD.DnD_5e
         }
 
     }
-
-    
 }
