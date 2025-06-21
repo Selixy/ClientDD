@@ -30,28 +30,26 @@ namespace DnD.DnD_5e
 
 
         // ──────────────── Ressources ────────────────
-        public int[]                   SpellEmplasement  { get; protected set; }
-        public Dictionary<string, int> SpecialResources  { get; protected set; }
+        public Dictionary<string, int[]> Ressources { get; protected set; }
 
 
 
         // ──────────────── Constructeur ────────────────
-        public Skill_DnD_5e(int                     IndexUser
-                           ,string                  Name             = "[Unknown Skill_DnD_5e]"
-                           ,ActivContext            Context          = ActivContext.NoFight
-                           ,int                     Targetable       = 0
-                           ,int                     Range            = 5
-                           ,int                     Radius           = 0
-                           ,int?                    DC               = null
-                           ,List<DamageComponent>   Damages          = null
-                           ,int                     DamagesJDS       = 1
-                           ,List<Etat_DnD_5e>       Etats            = null
-                           ,List<Etat_DnD_5e>       EtatsJDS         = null
-                           ,SkillType               SkillType        = SkillType.Utility
-                           ,StateEnum               AttackRoll       = StateEnum.None
-                           ,DnDRollType             SauvgardeRoll    = DnDRollType.None
-                           ,Dictionary<string, int> SpecialResources = null
-                           ,int[]                   SpellEmplasement = null
+        public Skill_DnD_5e(int                       IndexUser
+                           ,string                    Name             = "[Unknown Skill_DnD_5e]"
+                           ,ActivContext              Context          = ActivContext.NoFight
+                           ,int                       Targetable       = 0
+                           ,int                       Range            = 5
+                           ,int                       Radius           = 0
+                           ,int?                      DC               = null
+                           ,List<DamageComponent>     Damages          = null
+                           ,int                       DamagesJDS       = 1
+                           ,List<Etat_DnD_5e>         Etats            = null
+                           ,List<Etat_DnD_5e>         EtatsJDS         = null
+                           ,SkillType                 SkillType        = SkillType.Utility
+                           ,StateEnum                 AttackRoll       = StateEnum.None
+                           ,DnDRollType               SauvgardeRoll    = DnDRollType.None
+                           ,Dictionary<string, int[]> Ressources       = null
                            )
                            : base(IndexUser
                                  ,Name
@@ -69,8 +67,7 @@ namespace DnD.DnD_5e
             this.SkillType        = SkillType;
             this.AttackRoll       = AttackRoll;
             this.SauvegardeRoll   = SauvgardeRoll;
-            this.SpecialResources = SpecialResources;
-            this.SpellEmplasement = SpellEmplasement;
+            this.Ressources       = Ressources;
         }
 
         // ──────────────── Cast principal ────────────────
@@ -84,7 +81,7 @@ namespace DnD.DnD_5e
             var damages = this.Damages;
 
             // Consommation effective si tout est valide
-            ((Entity_DnD_5e)base.Caster).ConsumeResources(SpecialResources, SpellEmplasement);
+            ((Entity_DnD_5e)base.Caster).ConsumeResources(this.Ressources);
 
             if ((AttackRoll & StateEnum.None) == 0)
             {
@@ -243,32 +240,27 @@ namespace DnD.DnD_5e
         {
             var caster = (Entity_DnD_5e)base.Caster;
 
-            // Vérifie les ressources spéciales
-            if (SpecialResources != null)
-            {
-                foreach (var (resName, requiredAmount) in SpecialResources)
-                {
-                    if (!caster.SpecialRessources.TryGetValue(resName, out int available) || available < requiredAmount)
-                        return false;
-                }
-            }
+            if (Ressources == null)
+                return true;
 
-            // Vérifie les emplacements de sort
-            if (SpellEmplasement != null)
+            foreach (var (key, requiredArray) in Ressources)
             {
-                for (int i = 0; i < SpellEmplasement.Length; i++)
+                if (!caster.Ressources.TryGetValue(key, out int[] availableArray))
+                    return false;
+
+                for (int i = 0; i < requiredArray.Length; i++)
                 {
-                    int required = SpellEmplasement[i];
+                    int required = requiredArray[i];
                     if (required <= 0) continue;
 
-                    if (i >= caster.SpellEmplasement.Length || caster.SpellEmplasement[i] < required)
+                    if (i >= availableArray.Length || availableArray[i] < required)
                         return false;
                 }
             }
 
-            // Si tout est suffisant
             return true;
         }
+
 
         public override void Update()
         {

@@ -39,11 +39,9 @@ namespace DnD.DnD_5e
         public List<Skill>          Special_Ability      { get; protected set; }
 
 
-        // ──────────────── Ressources magiques ────────────────
-        public int[]                   SpellEmplasementMax  { get; protected set; }
-        public int[]                   SpellEmplasement     { get; protected set; }
-        public Dictionary<string, int> SpecialRessources    { get; protected set; }
-        public Dictionary<string, int> SpecialRessourcesMax { get; protected set; }
+        // ──────────────── Ressources ────────────────
+        public Dictionary<string, int[]> Ressources      { get; protected set; }
+        public Dictionary<string, int[]> RessourcesMax   { get; protected set; }
 
 
         // ──────────────── Système de compétences et résistance ────────────────
@@ -142,7 +140,6 @@ namespace DnD.DnD_5e
             int halfCasterLevel  = 0;
             int thirdCasterLevel = 0;
 
-            // Calcule les niveaux de lanceur par archétype
             foreach (var c in this.Classes)
             {
                 switch (c.Archetype)
@@ -150,35 +147,31 @@ namespace DnD.DnD_5e
                     case ClassArchetype.FullCaster:
                         fullCasterLevel += c.Lvl;
                         break;
-
                     case ClassArchetype.HalfCaster:
                         halfCasterLevel += c.Lvl;
                         break;
-
                     case ClassArchetype.ThirdCaster:
                         thirdCasterLevel += c.Lvl;
                         break;
-
-                    // Martial ou Special ne comptent pas
                 }
             }
 
-            // Convertit en niveau de lanceur total selon les règles officielles
             int totalCasterLevel =
                 fullCasterLevel
-                + (int)Math.Floor(halfCasterLevel  / 2.0)
+                + (int)Math.Floor(halfCasterLevel / 2.0)
                 + (int)Math.Floor(thirdCasterLevel / 3.0);
 
             totalCasterLevel = Math.Clamp(totalCasterLevel, 0, 20);
 
-            // Utilise le tableau pour déterminer les emplacements globaux
+            // Récupère les emplacements standards
             var spellSlots = CasterInfo.CasterSlots[totalCasterLevel];
 
-            // Copie le tableau
             int[] result = new int[9];
             for (int i = 0; i < 9; i++)
                 result[i] = spellSlots?[i] ?? 0;
 
+            // Met à jour RessourcesMax
+            RessourcesMax["SpellSlots"] = result;
             return result;
         }
 
@@ -238,33 +231,33 @@ namespace DnD.DnD_5e
             base.TakeDamage(total);
         }
 
-        public void ConsumeResources(Dictionary<string, int> specialCosts = null, int[] spellSlotCosts = null)
+        public void ConsumeResources(Dictionary<string, int[]> resourceCosts)
         {
-            // Décrémenter les ressources spéciales dynamiques (ex: Qi, Sorcelerie)
-            if (specialCosts != null)
-            {
-                foreach (var pair in specialCosts)
-                {
-                    if (SpecialRessources.ContainsKey(pair.Key))
-                    {
-                        SpecialRessources[pair.Key] = Math.Max(0, SpecialRessources[pair.Key] - pair.Value);
-                    }
-                }
-            }
+            if (resourceCosts == null)
+                return;
 
-            // Décrémenter les emplacements de sorts (niveau 1 à 9)
-            if (spellSlotCosts != null)
+            foreach (var pair in resourceCosts)
             {
-                for (int i = 0; i < spellSlotCosts.Length; i++)
-                {
-                    int cost = spellSlotCosts[i];
-                    if (cost <= 0) continue;
+                string key = pair.Key;
+                int[] costs = pair.Value;
 
-                    if (i < SpellEmplasement.Length)
-                    {
-                        SpellEmplasement[i] = Math.Max(0, SpellEmplasement[i] - cost);
-                    }
+                if (!Ressources.ContainsKey(key))
+                    continue;
+
+                int[] values = Ressources[key];
+
+                for (int i = 0; i < costs.Length; i++)
+                {
+                    if (costs[i] <= 0) continue;
+
+                    if (i >= values.Length)
+                        continue; // ignorer l’index inexistant
+
+                    values[i] = Math.Max(0, values[i] - costs[i]);
                 }
+
+                // Réenregistre le tableau modifié
+                Ressources[key] = values;
             }
         }
     }
