@@ -1,24 +1,27 @@
 using System;
 
-public struct Dice
+namespace RPG_System
 {
-    public int Number;
-    public int Value;
-
-    private static Random rng = new Random();
-
-    private int RollOnce()
+    public class Dice
     {
-        return rng.Next(1, Value + 1);
-    }
+        public int Value  {get; private set;}
+        public string Tag {get; private set;}
 
-    public int Roll()
-    {
-        int total = 0;
-        for (int i = 0; i < Number; i++)
+        private static readonly Random _rng = new Random();
+
+        public Dice(int v, string t = null)
         {
-            total += RollOnce();
+            this.Value  = v;
+            this.Tag    = t;
         }
-        return total;
+
+        public (int Result, string Tag) Roll
+        {
+            get
+            {
+                int result = _rng.Next(1, Value + 1);
+                return (result, this.Tag);
+            }
+        }
     }
 }
