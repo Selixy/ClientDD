@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace RPG_System
 {
-    public class GameRequestQueue
+    public class RequestQueue
     {
         private readonly Queue<Func<Task>> _queue = new();
         private bool _isProcessing = false;

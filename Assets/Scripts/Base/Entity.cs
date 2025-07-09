@@ -7,7 +7,7 @@ namespace RPG_System
     public class Entity
     {
         public string      Name      { get; private set; }
-        public Vector3     Position  { get; private set; }
+        public Position    Position  { get; private set; }
 
         public List<Item>  Inventory { get; private set; }
         public List<Item>  Equipped  { get; private set; }
@@ -20,7 +20,7 @@ namespace RPG_System
 
         // Constructeur
         public Entity(string       Name      = "Unknown Entity"
-                     ,Vector3?     position  = null
+                     ,Position     position  = null
                      ,List<Class>  classes   = null
                      ,List<State>  states    = null
                      ,List<Item>   inventory = null

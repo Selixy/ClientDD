@@ -15,8 +15,8 @@ namespace RPG_System
         public Vector3 GetPosition()
         {
             if (this.Vector.HasValue) return this.Vector.Value;
-            if (this.Entity != null)  return this.Entity.Position;
-            if (this.Item != null)    return this.Item.Position;
+            if (this.Entity != null)  return (Vector3)this.Entity.Position;
+            if (this.Item != null)    return (Vector3)this.Item.Position;
             return Vector3.Zero;
         }
 
