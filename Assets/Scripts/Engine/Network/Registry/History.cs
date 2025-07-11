@@ -4,7 +4,7 @@ namespace RPG_System.Networking
 {
     public static partial class NetworkRegistry
     {
-        /// Vide l’historique (utile au lancement de nouvelle partie).
+        // Vide l’historique (utile au lancement de nouvelle partie).
         public static void ClearHistory() => ConnectionHistory.Clear();
     }
 

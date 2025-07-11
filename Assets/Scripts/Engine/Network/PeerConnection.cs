@@ -6,15 +6,15 @@ using Unity.WebRTC;
 
 namespace RPG_System.Networking
 {
-    /// Gère une seule connexion WebRTC vers un peer, avec data-channel, ICE buffering,
-    /// états de connexion et collecte périodique de statistiques (RTT, jitter, pertes…).
+    // Gère une seule connexion WebRTC vers un peer, avec data-channel, ICE buffering,
+    // états de connexion et collecte périodique de statistiques (RTT, jitter, pertes…).
     public class PeerConnection : IDisposable
     {
         public string PeerId { get; }
         public RTCPeerConnection Connection { get; }
         public RTCDataChannel DataChannel { get; private set; }
 
-        /// True dès que la connexion est établie.
+        // True dès que la connexion est établie.
         public bool IsConnected { get; private set; }
 
         public event Action<string> OnConnectionEstablished;
@@ -22,7 +22,7 @@ namespace RPG_System.Networking
         public event Action<string, RTCPeerConnectionState> OnConnectionStateChanged;
         public event Action<string, PeerStats> OnStatsUpdated;
 
-        /// ICE candidates reçues avant SetRemoteDescription.
+        // ICE candidates reçues avant SetRemoteDescription.
         public List<RTCIceCandidateInit> PendingRemoteCandidates { get; } = new();
 
         private bool _remoteDescSet;
