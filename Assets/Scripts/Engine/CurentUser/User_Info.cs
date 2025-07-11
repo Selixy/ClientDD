@@ -3,13 +3,13 @@ using System.Text;
 
 namespace RPG_System.Networking
 {
-    public class User_Info
+    public static class User_Info
     {
         private static readonly Random _rng = new Random();
-        private string _tagID;
+        private static string _tagID;
 
-        public string Pseudo { get; set; }
-        public string TagID
+        public static string Pseudo { get; set; }
+        public static string TagID
         {
             get
             {
@@ -20,9 +20,9 @@ namespace RPG_System.Networking
             private set => _tagID = value;
         }
 
-        public string ID => Pseudo + TagID;
+        public static string ID => Pseudo + TagID;
 
-        public float ComputationScore => PC_Info.ComputationScore;
+        public static float ComputationScore => PC_Info.ComputationScore;
 
 
         private static string GenerateRandomString(int length)

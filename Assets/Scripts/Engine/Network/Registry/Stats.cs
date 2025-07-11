@@ -1,27 +1,40 @@
 // NetworkRegistry.Stats.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+
 namespace RPG_System.Networking
 {
-    public class NetworkClientStats
+    public static partial class NetworkRegistry
     {
-        // WebRTC metrics
-        public int    PingMs;
-        public float  JitterMs;
-        public float  PacketLossRate;
-        public ulong  PacketsSent;
-        public ulong  PacketsReceived;
-        public ulong  PacketsLost;
+        private static readonly Timer _rankTimer;
 
-        // Quality score [0–100]
-        public float NetworkScore
+        static NetworkRegistry()
         {
-            get
-            {
-                float score = 100f;
-                score -= PingMs * 0.1f;
-                score -= JitterMs;
-                score -= PacketLossRate * 50f;
-                return score < 0f ? 0f : (score > 100f ? 100f : score);
-            }
+            _rankTimer = new Timer(
+                _ => RankMachin.RecomputeAll(),
+                null,
+                dueTime: 0,
+                period: 5000
+            );
+        }
+
+        public static void TrackClient(string id)
+        {
+            ActiveClients[id] = new RankMachin(id);
+        }
+
+        public static void UntrackClient(string id)
+        {
+            ActiveClients.Remove(id);
+        }
+
+        public static float GetAverageNetworkScore()
+        {
+            var scores = Peers.Values
+                .Select(p => p.Stats.NetworkScore);
+            return scores.Any() ? (float)scores.Average() : 0f;
         }
     }
 }
