@@ -36,7 +36,7 @@ namespace RPG_System.Networking
             foreach (int minScore in scoreThresholds)
             {
                 best = ActiveClients.Values
-                    .Where(r => r.Score_Network >= minScore)
+                    .Where(r => r.Score_Network >= minScore && r.ID != computerID)
                     .OrderByDescending(r => r.Rank_Computation)
                     .FirstOrDefault();
 
