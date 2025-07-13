@@ -63,7 +63,7 @@ namespace RPG_System.Networking
             offset += 16;
             buffer[offset++] = (byte)(payloadLength >> 8);
             buffer[offset++] = (byte)(payloadLength & 0xFF);
-            buffer[offset++] = 0; // Réservé
+            buffer[offset++] = 0;
             Buffer.BlockCopy(payload, 0, buffer, offset, payload.Length);
 
             return buffer;
@@ -95,6 +95,20 @@ namespace RPG_System.Networking
         /// Gère la réception d’un message binaire brut
         public static void HandleRawMessageBytes(string peerId, byte[] raw)
         {
+            // Ping brut (0x01) → on répond avec Pong
+            if (raw.Length == 1 && raw[0] == 0x01)
+            {
+                if (NetworkRegistry.Peers.TryGetValue(peerId, out var peer))
+                    peer.Send(new byte[] { 0x02 });
+                return;
+            }
+            // Pong brut (0x02) → Reponse
+            if (raw.Length == 1 && raw[0] == 0x02)
+            {
+                OnPongReceived?.Invoke(peerId);
+                return;
+            }
+
             if (raw.Length < 20) return;
 
             int offset = 0;

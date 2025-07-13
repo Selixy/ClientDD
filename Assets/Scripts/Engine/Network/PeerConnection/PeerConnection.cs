@@ -70,7 +70,17 @@ namespace RPG_System.Networking
         {
             DataChannel = channel;
             DataChannel.OnMessage = bytes =>
+            {
+                // Si on reçoit un ping simple (0x01), on répond 0x02
+                if (bytes.Length == 1 && bytes[0] == 0x01)
+                {
+                    Send(new byte[] { 0x02 }); // Pong
+                    return;
+                }
+
+                // Sinon, message normal
                 P2PNetwork.HandleRawMessageBytes(PeerId, bytes);
+            };
         }
 
         /// Envoie un message binaire
