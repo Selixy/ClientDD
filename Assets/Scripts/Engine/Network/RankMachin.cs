@@ -21,8 +21,6 @@ namespace RPG_System.Networking
         /// Recalcule les rangs Network et Computation pour tous les RankMachin trackés.
         public static void RecomputeAll()
         {
-            //RefreshScore();
-
             var all = NetworkRegistry.ActiveClients.Values.ToList();
 
             var byNet = all.OrderByDescending(r => r.Score_Network).ToList();
@@ -36,19 +34,11 @@ namespace RPG_System.Networking
 
         public void RefreshScore()
         {
-            // Computation : localUser si ID identique, sinon on demande par message a l'api
-            if (this.ID == User_Info.ID)
-            {
-                this.Score_Computation = User_Info.ComputationScore;
+            if (this.ID != User_Info.ID)
+                return;
 
-                // Network : moyenne de tous les NetworkScore des peers connus
-                NetworkRegistry.GetAverageNetworkScore();
-            }
-            else
-            {
-                this.Score_Computation = 0f;
-                this.Score_Network = 0f;
-            }
+            this.Score_Computation = User_Info.ComputationScore;
+            NetworkRegistry.GetAverageNetworkScore();
         }
     }
 }

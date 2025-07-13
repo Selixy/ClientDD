@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Unity.WebRTC;
 
@@ -66,11 +65,19 @@ namespace RPG_System.Networking
                 Connection.OnDataChannel = ch => InitDataChannel(ch);
         }
 
+        /// Initialise le canal de données et redirige les paquets reçus vers P2PNetwork (binaire)
         private void InitDataChannel(RTCDataChannel channel)
         {
             DataChannel = channel;
             DataChannel.OnMessage = bytes =>
-                P2PNetwork.HandleRawMessage(PeerId, Encoding.UTF8.GetString(bytes));
+                P2PNetwork.HandleRawMessageBytes(PeerId, bytes);
+        }
+
+        /// Envoie un message binaire
+        public void Send(byte[] data)
+        {
+            if (DataChannel?.ReadyState == RTCDataChannelState.Open)
+                DataChannel.Send(data);
         }
 
         public RTCSessionDescriptionAsyncOperation CreateOffer()  => Connection.CreateOffer();
@@ -97,12 +104,6 @@ namespace RPG_System.Networking
         }
 
         public RTCIceCandidateInit[] GetLocalIceCandidates() => _localIceCandidates.ToArray();
-
-        public void Send(string message)
-        {
-            if (DataChannel?.ReadyState == RTCDataChannelState.Open)
-                DataChannel.Send(Encoding.UTF8.GetBytes(message));
-        }
 
         public RTCSessionDescriptionAsyncOperation RestartIce() => Connection.CreateOffer();
 

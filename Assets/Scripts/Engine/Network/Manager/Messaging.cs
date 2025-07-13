@@ -1,64 +1,75 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace RPG_System.Networking
 {
     public static partial class P2PNetwork
     {
-        // ---- Données pour le retry + stock des échecs ----
-
         private class AckEntry
         {
-            public Action  Callback;
-            public int     Attempts;
-            public string  Envelope;
-            public string  PeerId;
+            public Action Callback;
+            public int Attempts;
+            public byte[] Envelope;
+            public string PeerId;
         }
 
-        // Pending ACKs : messageId -> AckEntry
-        private static readonly ConcurrentDictionary<string, AckEntry> _pendingAcks
-            = new();
+        private static readonly ConcurrentDictionary<Guid, AckEntry> _pendingAcks = new();
+        private static readonly ConcurrentDictionary<Guid, (string peerId, byte[] envelope)> _failedMessages = new();
+        private static readonly HashSet<Guid> _receivedIds = new();
 
-        // Stocke les messages ayant échoué après 3 tentatives
-        // messageId -> (peerId, envelope)
-        private static readonly ConcurrentDictionary<string, (string peerId, string envelope)> _failedMessages
-            = new();
+        public static event Action<string, MessageType, byte[]> OnMessageReceived;
+        public static event Action<string, Guid> OnMessageAcknowledged;
+        public static event Action<string, Guid> OnMessageFailed;
 
-        // Pour éviter les doublons à la réception
-        private static readonly HashSet<string> _receivedIds = new();
+        private const int MAX_ATTEMPTS = 3;
+        private const int RETRY_DELAY_MS = 300;
 
-        public static event Action<string, string> OnMessageAcknowledged;
-        public static event Action<string, string> OnMessageFailed;
-
-        const char   SEP            = '|';
-        const string PREFIX_MSG     = "MSG";
-        const string PREFIX_ACK     = "ACK";
-        const int    MAX_ATTEMPTS   = 3;
-        const int    RETRY_DELAY_MS = 300;
-
-        /// Envoie un message fiable avec retry. onAck est invoqué dès l'ACK.
-        public static void SendMessage(string peerId, string payload, Action onAck = null)
+        public enum MessageType : byte
         {
-            var messageId = Guid.NewGuid().ToString();
-            var envelope  = string.Join(SEP, PREFIX_MSG, messageId, payload);
+            ApiCall = 1,
+            Audio = 2
+        }
+
+        /// Envoie un message binaire avec retry et ACK
+        public static void SendMessage(string peerId, MessageType type, byte[] payload, Action onAck = null)
+        {
+            Guid messageId = Guid.NewGuid();
+            byte[] envelope = BuildEnvelope(type, messageId, payload);
 
             var entry = new AckEntry
             {
                 Callback = onAck,
                 Attempts = 0,
                 Envelope = envelope,
-                PeerId   = peerId
+                PeerId = peerId
             };
             _pendingAcks[messageId] = entry;
 
-            // Lance les essais asynchrones
             _ = RetrySendAsync(messageId);
         }
 
-        private static async Task RetrySendAsync(string messageId)
+        private static byte[] BuildEnvelope(MessageType type, Guid messageId, byte[] payload)
+        {
+            byte[] guidBytes = messageId.ToByteArray();
+            ushort payloadLength = (ushort)payload.Length;
+
+            byte[] buffer = new byte[1 + 16 + 2 + 1 + payload.Length];
+            int offset = 0;
+
+            buffer[offset++] = (byte)type;
+            Buffer.BlockCopy(guidBytes, 0, buffer, offset, 16);
+            offset += 16;
+            buffer[offset++] = (byte)(payloadLength >> 8);
+            buffer[offset++] = (byte)(payloadLength & 0xFF);
+            buffer[offset++] = 0; // Réservé
+            Buffer.BlockCopy(payload, 0, buffer, offset, payload.Length);
+
+            return buffer;
+        }
+
+        private static async Task RetrySendAsync(Guid messageId)
         {
             if (!_pendingAcks.TryGetValue(messageId, out var entry))
                 return;
@@ -66,19 +77,14 @@ namespace RPG_System.Networking
             while (entry.Attempts < MAX_ATTEMPTS)
             {
                 entry.Attempts++;
-                // Envoi
                 if (NetworkRegistry.Peers.TryGetValue(entry.PeerId, out var peer))
                     peer.Send(entry.Envelope);
 
-                // Attente de l'ACK ou timeout
                 await Task.Delay(RETRY_DELAY_MS);
-
-                // Si l'ACK est déjà arrivé, on arrête
                 if (!_pendingAcks.ContainsKey(messageId))
                     return;
             }
 
-            // Après MAX_ATTEMPTS sans ACK -> échec
             if (_pendingAcks.TryRemove(messageId, out entry))
             {
                 _failedMessages[messageId] = (entry.PeerId, entry.Envelope);
@@ -86,51 +92,65 @@ namespace RPG_System.Networking
             }
         }
 
-        /// Reçoit RAW. Gère MSG/ACK, ignore doublons, renvoie ACK automatique.
-        public static void HandleRawMessage(string peerId, string raw)
+        /// Gère la réception d’un message binaire brut
+        public static void HandleRawMessageBytes(string peerId, byte[] raw)
         {
-            var parts = raw.Split(SEP, 3);
-            if (parts.Length < 2) return;
+            if (raw.Length < 20) return;
 
-            switch (parts[0])
+            int offset = 0;
+            var type = (MessageType)raw[offset++];
+
+            byte[] guidBytes = new byte[16];
+            Buffer.BlockCopy(raw, offset, guidBytes, 0, 16);
+            offset += 16;
+            Guid messageId = new Guid(guidBytes);
+
+            ushort length = (ushort)((raw[offset++] << 8) | raw[offset++]);
+            byte reserved = raw[offset++];
+
+            if (length + offset > raw.Length) return;
+
+            lock (_receivedIds)
             {
-                case PREFIX_MSG:
-                    {
-                        var id      = parts[1];
-                        var payload = parts.Length >= 3 ? parts[2] : "";
+                if (!_receivedIds.Add(messageId))
+                    return;
+            }
 
-                        // Ignore si déjà traité
-                        lock (_receivedIds)
-                        {
-                            if (!_receivedIds.Add(id))
-                                return; 
-                        }
+            // Envoi ACK immédiat
+            SendAck(peerId, messageId);
 
-                        // Renvoie immédiat de l'ACK
-                        var ackEnv = string.Join(SEP, PREFIX_ACK, id);
-                        if (NetworkRegistry.Peers.TryGetValue(peerId, out var peer))
-                            peer.Send(ackEnv);
+            // Payload
+            byte[] payload = new byte[length];
+            Buffer.BlockCopy(raw, offset, payload, 0, length);
+            OnMessageReceived?.Invoke(peerId, type, payload);
+        }
 
-                        OnMessageReceived?.Invoke(peerId, payload);
-                        break;
-                    }
+        private static void SendAck(string peerId, Guid messageId)
+        {
+            byte[] ack = new byte[1 + 16];
+            ack[0] = 255; // Type ACK réservé
+            Buffer.BlockCopy(messageId.ToByteArray(), 0, ack, 1, 16);
+            if (NetworkRegistry.Peers.TryGetValue(peerId, out var peer))
+                peer.Send(ack);
+        }
 
-                case PREFIX_ACK:
-                    {
-                        var id = parts[1];
-                        // Débloque le retry / callback
-                        if (_pendingAcks.TryRemove(id, out var entry))
-                        {
-                            entry.Callback?.Invoke();
-                            OnMessageAcknowledged?.Invoke(entry.PeerId, id);
-                        }
-                        break;
-                    }
+        /// Gère la réception d’un ACK
+        public static void HandleAckBytes(string peerId, byte[] raw)
+        {
+            if (raw.Length != 17 || raw[0] != 255) return;
+
+            byte[] guidBytes = new byte[16];
+            Buffer.BlockCopy(raw, 1, guidBytes, 0, 16);
+            Guid messageId = new Guid(guidBytes);
+
+            if (_pendingAcks.TryRemove(messageId, out var entry))
+            {
+                entry.Callback?.Invoke();
+                OnMessageAcknowledged?.Invoke(entry.PeerId, messageId);
             }
         }
 
-        /// Permet d'interroger les messages qui ont échoué.
-        public static IReadOnlyDictionary<string, (string peerId, string envelope)> GetFailedMessages()
+        public static IReadOnlyDictionary<Guid, (string peerId, byte[] envelope)> GetFailedMessages()
             => _failedMessages;
     }
 }
