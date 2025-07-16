@@ -1,51 +1,68 @@
+// Api_Call.cs
 using System;
-using System.IO;
-using RPG_System.API;
+using Newtonsoft.Json.Linq;   // nécessite com.unity.nuget.newtonsoft-json
+using Selixy_Utils;           // pour ByteUtils
+using RPG_System.API;         // pour PublicAPI
+using UnityEngine;            // Debug.LogWarning
 
 namespace RPG_System.Networking
 {
     public static partial class P2PNetwork
     {
-        public static void CallRemoteFunction(string peerId, Group group, int id, byte[] input = null, Action onAck = null)
+        /// Envoie un appel RPC : [groupId(int), handlerId(int), jsonArgs(string)] sérialisés.
+        public static void CallRemoteFunction(
+            string peerId,
+            Group  group,
+            int    handlerId,
+            string jsonArgs = "[]",
+            Action onAck    = null)
         {
-            using var ms = new MemoryStream();
-            using var writer = new BinaryWriter(ms);
-
-            writer.Write((int)group); // codé sur 4 octets
-            writer.Write(id);         // codé sur 4 octets
-
-            if (input != null)
-                writer.Write(input);
-
-            SendMessage(peerId, MessageType.ApiCall, ms.ToArray(), onAck);
+            // ByteUtils.ToBytes prend les trois objets et concatène proprement
+            byte[] payload = ByteUtils.ToBytes(
+                (int)group,
+                handlerId,
+                jsonArgs
+            );
+            SendMessage(peerId, MessageType.ApiCall, payload, onAck);
         }
 
+        /// Réception d’un ApiCall : désérialise, appelle PublicAPI, renvoie la réponse.
         internal static void HandleRemoteFunction(string peerId, byte[] payload)
         {
-            if (payload.Length < 8)
-            {
-                UnityEngine.Debug.LogWarning("API payload trop court");
-                return;
-            }
+            // 1) Récupère le JSON array [group, handlerId, jsonArgs]
+            string arrJson = ByteUtils.ToDebugString(payload);
+            var    arr     = JArray.Parse(arrJson);
+            int    groupId   = arr[0].Value<int>();
+            int    handlerId = arr[1].Value<int>();
+            string jsonArgs  = arr[2].Value<string>();
 
-            //  Si ce n’est pas notre message, on redirige
+            // 2) Si ce n’est pas pour moi, on rebroadcaste simplement
             if (peerId != User_Info.ID)
             {
-                // Re-broadcast vers le vrai destinataire
-                SendMessage(peerId, MessageType.ApiCall, payload);
+                CallRemoteFunction(peerId, (Group)groupId, handlerId, jsonArgs);
                 return;
             }
 
-            int group = BitConverter.ToInt32(payload, 0);
-            int id    = BitConverter.ToInt32(payload, 4);
-            byte[] input = null;
-
-            if (payload.Length > 8)
+            // 3) Exécution du handler
+            byte[] resultPayload;
+            try
             {
-                input = new byte[payload.Length - 8];
-                Buffer.BlockCopy(payload, 8, input, 0, input.Length);
+                // PublicAPI.Handle attend un byte[] pour ses args
+                byte[] argsForApi = ByteUtils.ToBytes(jsonArgs);
+                resultPayload     = PublicAPI.Handle(handlerId, argsForApi);
+            }
+            catch (Exception ex)
+            {
+                resultPayload = ByteUtils.ToBytes($"Handler error: {ex.Message}");
             }
 
+            // 4) Renvoi de la réponse : on wrappe dans un JSON-array à un seul élément
+            string innerJson = ByteUtils.ToDebugString(resultPayload);
+            string wrapJson  = $"[{JsonEscape(innerJson)}]";
+            CallRemoteFunction(peerId, (Group)groupId, handlerId, wrapJson);
         }
+
+        static string JsonEscape(string s)
+            => "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
     }
 }

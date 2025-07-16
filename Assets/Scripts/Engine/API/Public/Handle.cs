@@ -5,7 +5,7 @@ using System.Reflection;
 using Newtonsoft.Json.Linq;    // nécessite com.unity.nuget.newtonsoft-json
 using Selixy_Utils;
 
-namespace RPG_System.Networking.Public
+namespace RPG_System.API
 {
     // 1) Attribut RPC (déclaré une seule fois)
     [AttributeUsage(AttributeTargets.Method)]

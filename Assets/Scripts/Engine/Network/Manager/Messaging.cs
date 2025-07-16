@@ -1,3 +1,4 @@
+// Messaging.cs
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ namespace RPG_System.Networking
 {
     public static partial class P2PNetwork
     {
-        private class AckEntry
+        class AckEntry
         {
             public Action Callback;
             public int Attempts;
@@ -15,64 +16,60 @@ namespace RPG_System.Networking
             public string PeerId;
         }
 
-        private static readonly ConcurrentDictionary<Guid, AckEntry> _pendingAcks = new();
-        private static readonly ConcurrentDictionary<Guid, (string peerId, byte[] envelope)> _failedMessages = new();
-        private static readonly HashSet<Guid> _receivedIds = new();
+        static readonly ConcurrentDictionary<Guid, AckEntry> _pendingAcks =
+            new ConcurrentDictionary<Guid, AckEntry>();
+        static readonly ConcurrentDictionary<Guid, (string peerId, byte[] envelope)> _failedMessages =
+            new ConcurrentDictionary<Guid, (string, byte[])>();
+        static readonly HashSet<Guid> _receivedIds = new HashSet<Guid>();
 
         public static event Action<string, MessageType, byte[]> OnMessageReceived;
-        public static event Action<string, Guid> OnMessageAcknowledged;
-        public static event Action<string, Guid> OnMessageFailed;
+        public static event Action<string, Guid>          OnMessageAcknowledged;
+        public static event Action<string, Guid>          OnMessageFailed;
 
-        private const int MAX_ATTEMPTS = 3;
-        private const int RETRY_DELAY_MS = 300;
+        const int MAX_ATTEMPTS   = 3;
+        const int RETRY_DELAY_MS = 300;
 
         public enum MessageType : byte
         {
             ApiCall = 1,
-            Audio = 2
+            Audio   = 2
         }
 
-        /// Envoie un message binaire avec retry et ACK
+        /// Envoie un envelope bas-niveau (type+GUID+len+payload) avec retry/ACK.
         public static void SendMessage(string peerId, MessageType type, byte[] payload, Action onAck = null)
         {
-            Guid messageId = Guid.NewGuid();
-            byte[] envelope = BuildEnvelope(type, messageId, payload);
+            var messageId = Guid.NewGuid();
+            var envelope  = BuildEnvelope(type, messageId, payload);
 
-            var entry = new AckEntry
-            {
+            _pendingAcks[messageId] = new AckEntry {
                 Callback = onAck,
                 Attempts = 0,
                 Envelope = envelope,
-                PeerId = peerId
+                PeerId   = peerId
             };
-            _pendingAcks[messageId] = entry;
-
             _ = RetrySendAsync(messageId);
         }
 
-        private static byte[] BuildEnvelope(MessageType type, Guid messageId, byte[] payload)
+        static byte[] BuildEnvelope(MessageType type, Guid messageId, byte[] payload)
         {
-            byte[] guidBytes = messageId.ToByteArray();
-            ushort payloadLength = (ushort)payload.Length;
+            int total = 1 + 16 + 2 + 1 + payload.Length;
+            var buf   = new byte[total];
+            int o = 0;
 
-            byte[] buffer = new byte[1 + 16 + 2 + 1 + payload.Length];
-            int offset = 0;
+            buf[o++] = (byte)type;
+            Buffer.BlockCopy(messageId.ToByteArray(), 0, buf, o, 16); o += 16;
+            ushort len = (ushort)payload.Length;
+            buf[o++] = (byte)(len >> 8);
+            buf[o++] = (byte)(len & 0xFF);
+            buf[o++] = 0; // reserved
+            Buffer.BlockCopy(payload, 0, buf, o, payload.Length);
 
-            buffer[offset++] = (byte)type;
-            Buffer.BlockCopy(guidBytes, 0, buffer, offset, 16);
-            offset += 16;
-            buffer[offset++] = (byte)(payloadLength >> 8);
-            buffer[offset++] = (byte)(payloadLength & 0xFF);
-            buffer[offset++] = 0;
-            Buffer.BlockCopy(payload, 0, buffer, offset, payload.Length);
-
-            return buffer;
+            return buf;
         }
 
-        private static async Task RetrySendAsync(Guid messageId)
+        static async Task RetrySendAsync(Guid messageId)
         {
-            if (!_pendingAcks.TryGetValue(messageId, out var entry))
-                return;
+            if (!_pendingAcks.TryGetValue(messageId, out var entry)) return;
 
             while (entry.Attempts < MAX_ATTEMPTS)
             {
@@ -92,17 +89,17 @@ namespace RPG_System.Networking
             }
         }
 
-        /// Gère la réception d’un message binaire brut
+        /// Traite la réception brute : ping/pong + déco/reco de l’enveloppe.
         public static void HandleRawMessageBytes(string peerId, byte[] raw)
         {
-            // Ping brut (0x01) → on répond avec Pong
+            // ping
             if (raw.Length == 1 && raw[0] == 0x01)
             {
-                if (NetworkRegistry.Peers.TryGetValue(peerId, out var peer))
-                    peer.Send(new byte[] { 0x02 });
+                if (NetworkRegistry.Peers.TryGetValue(peerId, out var p))
+                    p.Send(new byte[] { 0x02 });
                 return;
             }
-            // Pong brut (0x02) → Reponse
+            // pong
             if (raw.Length == 1 && raw[0] == 0x02)
             {
                 OnPongReceived?.Invoke(peerId);
@@ -111,51 +108,46 @@ namespace RPG_System.Networking
 
             if (raw.Length < 20) return;
 
-            int offset = 0;
-            var type = (MessageType)raw[offset++];
+            int o = 0;
+            var type   = (MessageType)raw[o++];
+            var guid    = new byte[16];
+            Buffer.BlockCopy(raw, o, guid, 0, 16); o += 16;
+            var messageId = new Guid(guid);
 
-            byte[] guidBytes = new byte[16];
-            Buffer.BlockCopy(raw, offset, guidBytes, 0, 16);
-            offset += 16;
-            Guid messageId = new Guid(guidBytes);
+            ushort length = (ushort)((raw[o++] << 8) | raw[o++]);
+            o++; // reserved
 
-            ushort length = (ushort)((raw[offset++] << 8) | raw[offset++]);
-            byte reserved = raw[offset++];
-
-            if (length + offset > raw.Length) return;
+            if (o + length > raw.Length) return;
 
             lock (_receivedIds)
-            {
                 if (!_receivedIds.Add(messageId))
                     return;
-            }
 
-            // Envoi ACK immédiat
+            // ack
             SendAck(peerId, messageId);
 
-            // Payload
-            byte[] payload = new byte[length];
-            Buffer.BlockCopy(raw, offset, payload, 0, length);
+            var payload = new byte[length];
+            Buffer.BlockCopy(raw, o, payload, 0, length);
             OnMessageReceived?.Invoke(peerId, type, payload);
         }
 
-        private static void SendAck(string peerId, Guid messageId)
+        static void SendAck(string peerId, Guid messageId)
         {
-            byte[] ack = new byte[1 + 16];
-            ack[0] = 255; // Type ACK réservé
+            var ack = new byte[1 + 16];
+            ack[0] = 255;
             Buffer.BlockCopy(messageId.ToByteArray(), 0, ack, 1, 16);
-            if (NetworkRegistry.Peers.TryGetValue(peerId, out var peer))
-                peer.Send(ack);
+            if (NetworkRegistry.Peers.TryGetValue(peerId, out var p))
+                p.Send(ack);
         }
 
-        /// Gère la réception d’un ACK
+        /// Traite un ACK pour retirer l’entrée et invoquer le callback.
         public static void HandleAckBytes(string peerId, byte[] raw)
         {
             if (raw.Length != 17 || raw[0] != 255) return;
 
-            byte[] guidBytes = new byte[16];
-            Buffer.BlockCopy(raw, 1, guidBytes, 0, 16);
-            Guid messageId = new Guid(guidBytes);
+            var guid = new byte[16];
+            Buffer.BlockCopy(raw, 1, guid, 0, 16);
+            var messageId = new Guid(guid);
 
             if (_pendingAcks.TryRemove(messageId, out var entry))
             {
@@ -164,7 +156,7 @@ namespace RPG_System.Networking
             }
         }
 
-        public static IReadOnlyDictionary<Guid, (string peerId, byte[] envelope)> GetFailedMessages()
+        public static IReadOnlyDictionary<Guid,(string peerId, byte[] envelope)> GetFailedMessages()
             => _failedMessages;
     }
 }

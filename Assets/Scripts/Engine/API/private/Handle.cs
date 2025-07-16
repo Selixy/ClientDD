@@ -1,10 +1,13 @@
 namespace RPG_System.API
 {
-    public static partial class ClientAPI
+    namespace RPG_System.API
     {
-        // public static void Handle(int id, byte[] input)
-        // {
+        public static partial class ClientAPI
+        {
+            // public static void Handle(int id, byte[] input)
+            // {
 
-        // }
+            // }
+        }
     }
 }

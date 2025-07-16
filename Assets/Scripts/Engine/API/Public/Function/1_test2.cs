@@ -1,6 +1,6 @@
 using Selixy_Utils;
 
-namespace RPG_System.Networking.Public
+namespace RPG_System.API
 {
     public static partial class PublicAPI
     {
