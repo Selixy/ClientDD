@@ -5,9 +5,9 @@ namespace RPG_System.API
     public static partial class PublicAPI
     {
         [RpcHandler(1)]
-        public static byte[] GetConnectionCode(string peerId)
+        public static byte[] GetConnectionCode()
         {
-            string code = PrivateAPI.GetConnectionCode(peerId);
+            string code = PrivateAPI.GetConnectionCode();
             return ByteUtils.ToBytes(code);
         }
     }

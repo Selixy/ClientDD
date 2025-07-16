@@ -11,9 +11,6 @@ namespace RPG_System.API
 {
     public class stringToFunction
     {
-        /// Exécute une commande de la forme :
-        ///   [clientID/]API/FunctionName[/arguments]
-        /// où arguments peut être un CSV (a,b,c) ou un JSON array ["a","b","c"].
         public bool Execute(string fullCommand, out string output)
         {
             output = "";
@@ -29,24 +26,19 @@ namespace RPG_System.API
             int idx = 0;
             string clientId = null;
 
-            // si le premier segment n'est pas "API", on le prend comme clientID
-            if (parts.Length > 0
-                && !parts[0].Equals("API", StringComparison.OrdinalIgnoreCase))
+            if (parts.Length > 0 && !parts[0].Equals("API", StringComparison.OrdinalIgnoreCase))
             {
                 clientId = parts[0];
                 idx++;
             }
 
-            // on attend "API"
-            if (parts.Length - idx < 1
-                || !parts[idx].Equals("API", StringComparison.OrdinalIgnoreCase))
+            if (parts.Length - idx < 1 || !parts[idx].Equals("API", StringComparison.OrdinalIgnoreCase))
             {
                 output = "Commande invalide. Utilisez [clientID/]API/nomFonction[/arguments]";
                 return false;
             }
             idx++;
 
-            // nom de la fonction
             if (parts.Length - idx < 1)
             {
                 output = "Fonction manquante";
@@ -54,39 +46,32 @@ namespace RPG_System.API
             }
             string func = parts[idx++];
 
-            // argument optionnel
             string input = parts.Length > idx ? parts[idx] : "";
 
-            // routing vers un autre client si besoin
             if (clientId != null && clientId != User_Info.ID)
                 return HandleExternalCommand(clientId, func, input, out output);
 
-            // résolution de la méthode statique dans cette classe
-            MethodInfo method = typeof(stringToFunction).GetMethod(
-                func,
-                BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase
-            );
+            // 🔁 Nouvelle logique : cherche dans PublicAPI
+            MethodInfo method = typeof(PublicAPI).GetMethods(BindingFlags.Static | BindingFlags.Public)
+                .FirstOrDefault(m => m.Name.Equals(func, StringComparison.OrdinalIgnoreCase)
+                                  && m.ReturnType == typeof(byte[]));
+
             if (method == null)
             {
                 output = $"Fonction inconnue : {func}";
                 return false;
             }
 
-            // préparation des arguments selon la signature
             object[] args;
             var parameters = method.GetParameters();
 
             if (parameters.Length == 1)
             {
                 var pt = parameters[0].ParameterType;
-                if (pt == typeof(byte[]))
-                    args = new object[] { ByteUtils.ToBytes(input) };
-                else
-                    args = new object[] { ConvertSingle(input, pt) };
+                args = new object[] { ConvertSingle(input, pt) };
             }
             else if (parameters.Length > 1)
             {
-                // parse CSV ou JSON array
                 string[] tokens;
                 if (input.StartsWith("[") && input.EndsWith("]"))
                 {
@@ -96,10 +81,7 @@ namespace RPG_System.API
                 }
                 else
                 {
-                    tokens = input
-                        .Split(',')
-                        .Select(s => s.Trim())
-                        .ToArray();
+                    tokens = input.Split(',').Select(s => s.Trim()).ToArray();
                 }
 
                 if (tokens.Length != parameters.Length)
@@ -117,20 +99,10 @@ namespace RPG_System.API
                 args = Array.Empty<object>();
             }
 
-            // invocation & traitement du retour
             try
             {
                 object result = method.Invoke(null, args);
-
-                if (result is byte[] b)
-                    output = ByteUtils.ToDebugString(b);
-                else if (result is string s)
-                    output = s;
-                else if (result != null)
-                    output = result.ToString();
-                else
-                    output = "";
-
+                output = result is byte[] b ? ByteUtils.ToDebugString(b) : result?.ToString() ?? "";
                 return true;
             }
             catch (TargetInvocationException tie)
@@ -145,9 +117,6 @@ namespace RPG_System.API
             }
         }
 
-        /// <summary>
-        /// Convertit une chaîne en type primitif, enum ou byte[].
-        /// </summary>
         private static object ConvertSingle(string str, Type targetType)
         {
             if (targetType == typeof(string))
@@ -159,7 +128,6 @@ namespace RPG_System.API
             return Convert.ChangeType(str, targetType);
         }
 
-        /// Redirige une commande destinée à un autre client.
         protected virtual bool HandleExternalCommand(
             string clientId,
             string func,
@@ -168,20 +136,6 @@ namespace RPG_System.API
         {
             output = $"Commande pour un autre ID ({clientId}) — à router vers {func}";
             return false;
-        }
-
-        // --- Exemples de fonctions exposées par stringToFunction ---
-
-        public static byte[] Test(bool flag)
-        {
-            return flag
-                ? ByteUtils.ToBytes(2.0f, 6, "Yolo")
-                : ByteUtils.ToBytes("nope");
-        }
-
-        public static byte[] Test2(float f, int i, string msg)
-        {
-            return ByteUtils.ToBytes(f * i, msg.Length);
         }
     }
 }

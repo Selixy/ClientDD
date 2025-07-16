@@ -4,8 +4,9 @@ namespace RPG_System.API
 {
     public static partial class PrivateAPI
     {
-        public static string GetConnectionCode(string peerId)
+        public static string GetConnectionCode()
         {
+            string peerId = User_Info.ID;
             var task = P2PNetwork.GenerateInvitationAsync(peerId);
             task.GetAwaiter().GetResult();
             var offer = P2PNetwork.OfferCache[peerId];
