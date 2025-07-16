@@ -1,5 +1,6 @@
-// Collections.cs
 using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Unity.WebRTC;
 
@@ -7,99 +8,142 @@ namespace RPG_System.Networking
 {
     public static partial class P2PNetwork
     {
-        // Auxiliaires pour await des opérations WebRTC
-        private static async Task AwaitDone(RTCSessionDescriptionAsyncOperation op)
+        // helpers pour await des opérations WebRTC avec annulation
+        private static async Task AwaitDone(RTCSessionDescriptionAsyncOperation op, CancellationToken ct)
         {
-            while (!op.IsDone) await Task.Yield();
-        }
-        private static async Task AwaitDone(RTCSetSessionDescriptionAsyncOperation op)
-        {
-            while (!op.IsDone) await Task.Yield();
+            while (!op.IsDone)
+            {
+                ct.ThrowIfCancellationRequested();
+                await Task.Yield();
+            }
         }
 
-        /// MJ : Génère et met en cache l’offre SDP+ICE pour peerId.
-        public static async Task GenerateInvitationAsync(string peerId)
+        private static async Task AwaitDone(RTCSetSessionDescriptionAsyncOperation op, CancellationToken ct)
+        {
+            while (!op.IsDone)
+            {
+                ct.ThrowIfCancellationRequested();
+                await Task.Yield();
+            }
+        }
+
+        // MJ : génère et met en cache l’offre SDP+ICE pour peerId
+        public static async Task GenerateInvitationAsync(string peerId, CancellationToken ct = default)
         {
             var peer = new PeerConnection(peerId, isInitiator: true);
             NetworkRegistry.RegisterPeer(peerId, peer);
+            peer.OnConnectionEstablished += id => OnPeerConnected?.Invoke(id);
 
-            // branchement événements
-            peer.OnConnectionEstablished += id  => OnPeerConnected?.Invoke(id);
+            try
+            {
+                var offerOp = peer.CreateOffer();
+                await AwaitDone(offerOp, ct).ConfigureAwait(false);
 
-            // création de l'offre
-            var offerOp = peer.CreateOffer();
-            await AwaitDone(offerOp);
+                var localOp = peer.SetLocalDescription(offerOp.Desc);
+                await AwaitDone(localOp, ct).ConfigureAwait(false);
 
-            // application locale
-            var localOp = peer.SetLocalDescription(offerOp.Desc);
-            await AwaitDone(localOp);
-
-            // mise en cache dans le Core
-            var message = new OfferMessage {
-                PeerId        = peerId,
-                Sdp           = offerOp.Desc.sdp,
-                IceCandidates = peer.GetLocalIceCandidates()
-            };
-            OfferCache[peerId] = message;
-
-            var code = SignalMessageCodec.Encode(message);
-            UnityEngine.Debug.Log($"[MJ] Offer pour {peerId}: {code}");
+                OfferCache[peerId] = new OfferMessage
+                {
+                    PeerId        = peerId,
+                    Sdp           = offerOp.Desc.sdp,
+                    IceCandidates = peer.GetLocalIceCandidates()
+                };
+            }
+            catch (OperationCanceledException)
+            {
+                peer.Dispose();
+                throw;
+            }
+            catch (Exception ex)
+            {
+                peer.Dispose();
+                throw new InvalidOperationException(
+                    $"Échec génération invitation pour '{peerId}'", ex);
+            }
         }
 
-        /// Joueur : traite l’offre reçue, crée et log la réponse SDP+ICE.
-        public static async Task ReceiveInvitationAsync(string encoded)
+        // Joueur : reçoit l’offre encodée, crée la réponse SDP+ICE
+        public static async Task ReceiveInvitationAsync(string encodedOffer, CancellationToken ct = default)
         {
-            var offer = SignalMessageCodec.Decode<OfferMessage>(encoded);
+            var offer = SignalMessageCodec.Decode<OfferMessage>(encodedOffer);
             var peer  = new PeerConnection(offer.PeerId, isInitiator: false);
             NetworkRegistry.RegisterPeer(offer.PeerId, peer);
+            peer.OnConnectionEstablished += id => OnPeerConnected?.Invoke(id);
 
-            peer.OnConnectionEstablished += id  => OnPeerConnected?.Invoke(id);
+            try
+            {
+                var remoteDesc = new RTCSessionDescription
+                {
+                    type = RTCSdpType.Offer,
+                    sdp  = offer.Sdp
+                };
+                var remoteOp = peer.SetRemoteDescription(remoteDesc);
+                await AwaitDone(remoteOp, ct).ConfigureAwait(false);
 
-            // application de l'offre distante
-            var remoteDesc = new RTCSessionDescription {
-                type = RTCSdpType.Offer,
-                sdp  = offer.Sdp
-            };
-            var remoteOp = peer.SetRemoteDescription(remoteDesc);
-            await AwaitDone(remoteOp);
+                foreach (var ice in offer.IceCandidates)
+                    peer.AddRemoteIceCandidate(ice);
 
-            foreach (var c in offer.IceCandidates)
-                peer.AddRemoteIceCandidate(c);
+                var answerOp = peer.CreateAnswer();
+                await AwaitDone(answerOp, ct).ConfigureAwait(false);
 
-            // création de la réponse
-            var answerOp = peer.CreateAnswer();
-            await AwaitDone(answerOp);
+                var localOp = peer.SetLocalDescription(answerOp.Desc);
+                await AwaitDone(localOp, ct).ConfigureAwait(false);
 
-            var localOp = peer.SetLocalDescription(answerOp.Desc);
-            await AwaitDone(localOp);
-
-            var answerMsg = new AnswerMessage {
-                PeerId        = offer.PeerId,
-                Sdp           = answerOp.Desc.sdp,
-                IceCandidates = peer.GetLocalIceCandidates()
-            };
-            var code = SignalMessageCodec.Encode(answerMsg);
-            UnityEngine.Debug.Log($"[Joueur] Answer pour {offer.PeerId}: {code}");
+                var answerMsg = new AnswerMessage
+                {
+                    PeerId        = offer.PeerId,
+                    Sdp           = answerOp.Desc.sdp,
+                    IceCandidates = peer.GetLocalIceCandidates()
+                };
+                var code = SignalMessageCodec.Encode(answerMsg);
+                // transmettez 'code' au MJ via votre signaling
+            }
+            catch (OperationCanceledException)
+            {
+                peer.Dispose();
+                throw;
+            }
+            catch (Exception ex)
+            {
+                peer.Dispose();
+                throw new InvalidOperationException(
+                    $"Échec réception invitation pour '{offer.PeerId}'", ex);
+            }
         }
 
-        /// MJ : finalise la connexion après réception de l’Answer.
-        public static async Task FinalizeConnectionAsync(string encoded)
+        // MJ : finalise la connexion après réception de l’answer encodée
+        public static async Task FinalizeConnectionAsync(string encodedAnswer, CancellationToken ct = default)
         {
-            var answer = SignalMessageCodec.Decode<AnswerMessage>(encoded);
+            var answer = SignalMessageCodec.Decode<AnswerMessage>(encodedAnswer);
+
             if (!NetworkRegistry.Peers.TryGetValue(answer.PeerId, out var peer))
-                throw new Exception($"[MJ] Pas d'offre pour {answer.PeerId}");
+                throw new KeyNotFoundException(
+                    $"Aucune offre en cache pour '{answer.PeerId}'");
 
-            var remoteDesc = new RTCSessionDescription {
-                type = RTCSdpType.Answer,
-                sdp  = answer.Sdp
-            };
-            var remoteOp = peer.SetRemoteDescription(remoteDesc);
-            await AwaitDone(remoteOp);
+            try
+            {
+                var remoteDesc = new RTCSessionDescription
+                {
+                    type = RTCSdpType.Answer,
+                    sdp  = answer.Sdp
+                };
+                var remoteOp = peer.SetRemoteDescription(remoteDesc);
+                await AwaitDone(remoteOp, ct).ConfigureAwait(false);
 
-            foreach (var c in answer.IceCandidates)
-                peer.AddRemoteIceCandidate(c);
-
-            UnityEngine.Debug.Log($"[MJ] Connexion finalisée avec {answer.PeerId}");
+                foreach (var ice in answer.IceCandidates)
+                    peer.AddRemoteIceCandidate(ice);
+            }
+            catch (OperationCanceledException)
+            {
+                peer.Dispose();
+                throw;
+            }
+            catch (Exception ex)
+            {
+                peer.Dispose();
+                throw new InvalidOperationException(
+                    $"Échec finalisation pour '{answer.PeerId}'", ex);
+            }
         }
     }
 }
