@@ -1,156 +1,187 @@
 using System;
+using System.IO;
+using System.Linq;
 using System.Reflection;
-using UnityEngine;
+using System.Runtime.Serialization.Json;
+using System.Text;
+using Selixy_Utils;
+using RPG_System.Networking;
 
 namespace RPG_System.API
 {
     public class stringToFunction
     {
-        /// Exécute une commande du format :
-        ///   [id/]group[_subgroup] "/" fonction ["/" input]
-        /// où subgroup peut être "get" ou "net".
+        /// Exécute une commande de la forme :
+        ///   [clientID/]API/FunctionName[/arguments]
+        /// où arguments peut être un CSV (a,b,c) ou un JSON array ["a","b","c"].
         public bool Execute(string fullCommand, out string output)
         {
             output = "";
 
             if (string.IsNullOrWhiteSpace(fullCommand))
             {
-                output = "<color=red>Commande vide</color>";
+                output = "Commande vide";
                 return false;
             }
 
-            // 1) Split, on enlève les segments vides
             var parts = fullCommand
-                .Split(new[]{'/'}, StringSplitOptions.RemoveEmptyEntries);
+                .Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             int idx = 0;
-            string id = null;
+            string clientId = null;
 
-            // 2) Détecter un ID si le premier segment n'est pas un groupe connu
-            if (parts.Length > 0 && !IsKnownGroup(parts[0]))
+            // si le premier segment n'est pas "API", on le prend comme clientID
+            if (parts.Length > 0
+                && !parts[0].Equals("API", StringComparison.OrdinalIgnoreCase))
             {
-                // Only treat as ID if next segment looks like a group or subgroup
-                if (parts.Length >= 2 && 
-                   (IsKnownGroup(parts[1]) || IsKnownGroup(parts[0] + "_" + parts[1])))
-                {
-                    id = parts[0];
-                    idx = 1;
-                }
+                clientId = parts[0];
+                idx++;
             }
 
-            // 3) Déterminer groupKey (groupe ou groupe_sousgroupe)
-            string groupKey;
-            if (parts.Length - idx >= 2 
-                && IsKnownGroup(parts[idx] + "_" + parts[idx+1]))
+            // on attend "API"
+            if (parts.Length - idx < 1
+                || !parts[idx].Equals("API", StringComparison.OrdinalIgnoreCase))
             {
-                // on a un sous-groupe via slash
-                groupKey = (parts[idx] + "_" + parts[idx+1]).ToLowerInvariant();
-                idx += 2;
-            }
-            else if (parts.Length - idx >= 1 && IsKnownGroup(parts[idx]))
-            {
-                // groupe simple ou underscore
-                groupKey = parts[idx].ToLowerInvariant();
-                idx += 1;
-            }
-            else
-            {
-                output = "<color=red>Groupe invalide. " +
-                         "Attendu : group[/subgroup]</color>";
+                output = "Commande invalide. Utilisez [clientID/]API/nomFonction[/arguments]";
                 return false;
             }
+            idx++;
 
-            // 4) Récupérer nom de la fonction
+            // nom de la fonction
             if (parts.Length - idx < 1)
             {
-                output = "<color=red>Fonction manquante</color>";
+                output = "Fonction manquante";
                 return false;
             }
             string func = parts[idx++];
-            
-            // 5) Récupérer l'input optionnel
-            string input = parts.Length > idx
-                         ? parts[idx]
-                         : "";
 
-            // 6) Si ID spécifié et différent, router
-            if (id != null && id != RPG_System.Networking.User_Info.ID)
-                return HandleExternalCommand(id, groupKey, func, input, out output);
+            // argument optionnel
+            string input = parts.Length > idx ? parts[idx] : "";
 
-            // 7) Résoudre le type à partir du groupKey
-            Type target = groupKey switch
-            {
-                "client"      => typeof(ClientAPI),
-                "client_get"  => typeof(ClientAPI_Get),
-                "client_net"  => typeof(ClientAPI),
-                "server"      => typeof(ServerAPI),
-                "server_get"  => typeof(ServerAPI_Get),
-                "server_net"  => typeof(ServerAPI),
-                _             => null
-            };
-            if (target == null)
-            {
-                output = $"<color=red>Groupe inconnu : {groupKey}</color>";
-                return false;
-            }
+            // routing vers un autre client si besoin
+            if (clientId != null && clientId != User_Info.ID)
+                return HandleExternalCommand(clientId, func, input, out output);
 
-            // 8) Chercher la méthode statique (ignore case)
-            MethodInfo method = target.GetMethod(
+            // résolution de la méthode statique dans cette classe
+            MethodInfo method = typeof(stringToFunction).GetMethod(
                 func,
                 BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase
             );
             if (method == null)
             {
-                output = $"<color=red>Fonction inconnue : {func} dans {groupKey}</color>";
+                output = $"Fonction inconnue : {func}";
                 return false;
             }
 
-            // 9) Préparer les paramètres (0 ou 1 string)
-            object[] args = method.GetParameters().Length == 0
-                ? null
-                : new object[] { input };
+            // préparation des arguments selon la signature
+            object[] args;
+            var parameters = method.GetParameters();
 
-            // 10) Invocation
+            if (parameters.Length == 1)
+            {
+                var pt = parameters[0].ParameterType;
+                if (pt == typeof(byte[]))
+                    args = new object[] { ByteUtils.ToBytes(input) };
+                else
+                    args = new object[] { ConvertSingle(input, pt) };
+            }
+            else if (parameters.Length > 1)
+            {
+                // parse CSV ou JSON array
+                string[] tokens;
+                if (input.StartsWith("[") && input.EndsWith("]"))
+                {
+                    var js = new DataContractJsonSerializer(typeof(string[]));
+                    using var ms = new MemoryStream(Encoding.UTF8.GetBytes(input));
+                    tokens = (string[])js.ReadObject(ms);
+                }
+                else
+                {
+                    tokens = input
+                        .Split(',')
+                        .Select(s => s.Trim())
+                        .ToArray();
+                }
+
+                if (tokens.Length != parameters.Length)
+                {
+                    output = $"La fonction attend {parameters.Length} arguments, mais reçu {tokens.Length}.";
+                    return false;
+                }
+
+                args = new object[parameters.Length];
+                for (int i = 0; i < parameters.Length; i++)
+                    args[i] = ConvertSingle(tokens[i], parameters[i].ParameterType);
+            }
+            else
+            {
+                args = Array.Empty<object>();
+            }
+
+            // invocation & traitement du retour
             try
             {
                 object result = method.Invoke(null, args);
-                output = result?.ToString() ?? "<color=yellow>Pas de retour</color>";
+
+                if (result is byte[] b)
+                    output = ByteUtils.ToDebugString(b);
+                else if (result is string s)
+                    output = s;
+                else if (result != null)
+                    output = result.ToString();
+                else
+                    output = "";
+
                 return true;
+            }
+            catch (TargetInvocationException tie)
+            {
+                output = $"Erreur : {tie.InnerException?.Message ?? tie.Message}";
+                return false;
             }
             catch (Exception ex)
             {
-                output = $"<color=red>Erreur : {ex.InnerException?.Message ?? ex.Message}</color>";
+                output = $"Erreur : {ex.Message}";
                 return false;
             }
         }
 
-        /// Un groupe connu peut être "client", "server",
-        /// ou les formes "client_get", "server_net", etc.
-        private bool IsKnownGroup(string g)
+        /// <summary>
+        /// Convertit une chaîne en type primitif, enum ou byte[].
+        /// </summary>
+        private static object ConvertSingle(string str, Type targetType)
         {
-            switch (g.ToLowerInvariant())
-            {
-                case "client":
-                case "client_get":
-                case "client_net":
-                case "server":
-                case "server_get":
-                case "server_net":
-                    return true;
-                default:
-                    return false;
-            }
+            if (targetType == typeof(string))
+                return str;
+            if (targetType.IsEnum)
+                return Enum.Parse(targetType, str, ignoreCase: true);
+            if (targetType == typeof(byte[]))
+                return ByteUtils.ToBytes(str);
+            return Convert.ChangeType(str, targetType);
         }
 
-        /// Override pour router vers un autre ID (multi-instance).
+        /// Redirige une commande destinée à un autre client.
         protected virtual bool HandleExternalCommand(
-            string id,
-            string groupKey,
+            string clientId,
             string func,
             string input,
             out string output)
         {
-            output = $"<color=yellow>Commande pour un autre ID ({id}) — à router</color>";
+            output = $"Commande pour un autre ID ({clientId}) — à router vers {func}";
             return false;
+        }
+
+        // --- Exemples de fonctions exposées par stringToFunction ---
+
+        public static byte[] Test(bool flag)
+        {
+            return flag
+                ? ByteUtils.ToBytes(2.0f, 6, "Yolo")
+                : ByteUtils.ToBytes("nope");
+        }
+
+        public static byte[] Test2(float f, int i, string msg)
+        {
+            return ByteUtils.ToBytes(f * i, msg.Length);
         }
     }
 }

@@ -1,16 +1,17 @@
 {
   "dependencies": {
-    "com.unity.inputsystem": "1.13.0",
-    "com.unity.render-pipelines.universal": "17.0.3",
-    "com.unity.ugui": "2.0.0",
-    "com.unity.modules.imgui": "1.0.0",
-    "com.unity.modules.jsonserialize": "1.0.0",
-    "com.unity.modules.unitywebrequest": "1.0.0",
+    "com.unity.inputsystem":                    "1.13.0",
+    "com.unity.render-pipelines.universal":     "17.0.3",
+    "com.unity.ugui":                           "2.0.0",
+    "com.unity.nuget.newtonsoft-json":          "3.0.1",
+    "com.unity.modules.jsonserialize":          "1.0.0",
+    "com.unity.modules.imgui":                  "1.0.0",
+    "com.unity.modules.unitywebrequest":        "1.0.0",
     "com.unity.modules.unitywebrequesttexture": "1.0.0",
-    "com.unity.modules.unitywebrequestaudio": "1.0.0",
-    "com.unity.modules.video": "1.0.0",
-    "com.unity.modules.imageconversion": "1.0.0",
-    "com.unity.modules.ui": "1.0.0",
-    "com.unity.webrtc": "https://github.com/Unity-Technologies/com.unity.webrtc.git"
+    "com.unity.modules.unitywebrequestaudio":   "1.0.0",
+    "com.unity.modules.video":                  "1.0.0",
+    "com.unity.modules.imageconversion":        "1.0.0",
+    "com.unity.modules.ui":                     "1.0.0",
+    "com.unity.webrtc":                         "https://github.com/Unity-Technologies/com.unity.webrtc.git"
   }
 }

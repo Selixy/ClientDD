@@ -46,30 +46,6 @@ namespace RPG_System.Networking
                 Buffer.BlockCopy(payload, 8, input, 0, input.Length);
             }
 
-            switch ((Group)group)
-            {
-                case Group.ClientAPI:
-                    ClientAPI.Handle(id, input);
-                    break;
-                case Group.ClientAPI_Network:
-                    ClientAPI.HandleNetwork(id, input);
-                    break;
-                case Group.ClientAPI_Get:
-                    ClientAPI_Get.Handle(id, input);
-                    break;
-                case Group.ServerAPI:
-                    ServerAPI.Handle(id, input);
-                    break;
-                case Group.ServerAPI_Network:
-                    ServerAPI.HandleNetwork(id, input);
-                    break;
-                case Group.ServerAPI_Get:
-                    ServerAPI_Get.Handle(id, input);
-                    break;
-                default:
-                    UnityEngine.Debug.LogWarning($"Groupe API inconnu : {group}");
-                    break;
-            }
         }
     }
 }
