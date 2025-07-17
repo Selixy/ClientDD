@@ -62,3 +62,6 @@ Packages/packages-lock.json
 # Ignorer les builds locaux
 Build*/**
 ExportedObj/
+
+# temporaire, les fichier unity
+.meta
