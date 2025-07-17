@@ -4,7 +4,7 @@ namespace RPG_System.API
 {
     public static partial class PublicAPI
     {
-        [RpcHandler(4)]
+        [RpcHandler(3)]
         public static byte[] Ping(string peerId)
         {
             (bool success, int time) = PrivateAPI.Ping(peerId);

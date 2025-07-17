@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace RPG_System.Networking
+namespace RPG_System.User
 {
     public static class User_Info
     {

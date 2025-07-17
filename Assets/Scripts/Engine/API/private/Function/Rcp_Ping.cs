@@ -1,6 +1,4 @@
 using System;
-using System.Threading.Tasks;
-using RPG_System.Networking;
 
 namespace RPG_System.API
 {

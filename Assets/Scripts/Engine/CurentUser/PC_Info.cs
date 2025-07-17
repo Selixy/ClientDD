@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace RPG_System.Networking
+namespace RPG_System.User
 {
     public static class PC_Info
     {
