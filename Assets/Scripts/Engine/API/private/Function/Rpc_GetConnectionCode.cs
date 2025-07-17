@@ -6,11 +6,8 @@ namespace RPG_System.API
     {
         public static string GetConnectionCode()
         {
-            string peerId = User_Info.ID;
-            var task = P2PNetwork.GenerateInvitationAsync(peerId);
-            task.GetAwaiter().GetResult();
-            var offer = P2PNetwork.OfferCache[peerId];
-            return SignalMessageCodec.Encode(offer);
+
+            return "pas de code encor";
         }
     }
 }

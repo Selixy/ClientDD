@@ -4,11 +4,10 @@ namespace RPG_System.API
 {
     public static partial class PrivateAPI
     {
-        public static string SubmitConnectionCode(string encoded)
+        public static string SubmitConnectionCode(string code)
         {
-            var t = P2PNetwork.ReceiveInvitationAsync(encoded);
-            t.GetAwaiter().GetResult();
-            return "ok";
+
+            return "Pas implementer";
         }
     }
 }
